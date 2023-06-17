@@ -40,13 +40,13 @@ fun main() = application {
 
             if (analyzer.analyzed.value) {
                 LazyColumn {
-                    items(analyzer.channels.toList()) {
+                    items(analyzer.channels?.sortedByDescending { it.channelUpdates.size } ?: listOf()) {
                         Row(modifier = Modifier.clickable {
-                            selectedChannel = it.second
+                            selectedChannel = it
                         }) {
-                            Text(it.first)
+                            Text(it.shortChannelId)
                             Spacer(modifier = Modifier.weight(1f))
-                            Text(it.second.channelUpdates.size.toString())
+                            Text(it.channelUpdates.size.toString())
                         }
                     }
                 }
@@ -62,6 +62,7 @@ fun main() = application {
                             false
                         },
                     ) {
+                        // todo show channel capacity history as a graph
                         LazyColumn {
                             items(items = selectedChannel?.channelUpdates ?: listOf()) {
                                 Text(it.toString())

@@ -8,9 +8,7 @@ class Channel(
     }
 
     override fun hashCode(): Int {
-        var result = shortChannelId.hashCode()
-        result = 31 * result + channelUpdates.hashCode()
-        return result
+        return shortChannelId.hashCode()
     }
 
     override fun toString(): String {

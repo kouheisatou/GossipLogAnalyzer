@@ -14,21 +14,20 @@ class GossipLogAnalyzer(val logFile: File) {
     var lineCount = 0
     var maxLine = Files.lines(Paths.get(logFile.path)).count()
 
-    val channels = mutableMapOf<String, Channel>()
+    private val channelSet = ChannelSet()
+    var channels: List<Channel>? = null
 
     fun analyze(onFinished: () -> Unit, processPerLine: (readingLine: String?, progress: Float) -> Unit) {
-        println(maxLine)
         processing.value = true
         CoroutineScope(Dispatchers.Default).launch {
             BufferedReader(FileReader(logFile)).use { br ->
                 var line: String?
                 while (br.readLine().also { line = it } != null) {
                     val csvElements = line?.split(",") ?: listOf()
-                    val channelId = csvElements[2]
                     val channelUpdate = ChannelUpdate(
                         csvElements[0],
                         csvElements[1],
-                        channelId,
+                        csvElements[2],
                         csvElements[3],
                         csvElements[4],
                         csvElements[5],
@@ -38,15 +37,14 @@ class GossipLogAnalyzer(val logFile: File) {
                         csvElements[9],
                         csvElements[10],
                     )
-                    if(channels.contains(channelId)){
-                        channels[channelId]?.channelUpdates?.add(channelUpdate)
-                    }else{
-                        channels[channelId] = Channel(channelId)
-                    }
+
+                    channelSet.add(channelUpdate)
 
                     processPerLine(line, lineCount.toFloat() / maxLine)
                     lineCount++
                 }
+
+                channels = channelSet.toList()
                 onFinished()
                 processing.value = false
                 analyzed.value = true
