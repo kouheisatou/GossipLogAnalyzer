@@ -113,8 +113,14 @@ fun main() = application {
                 }
             } else {
                 if (analyzer.value!!.processing.value) {
-                    LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
-                    Text(readingLine)
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth().padding(20.dp))
+                        Text(readingLine)
+                    }
                 } else {
                     Button(onClick = {
                     }) {
