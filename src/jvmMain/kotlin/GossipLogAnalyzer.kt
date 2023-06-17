@@ -23,22 +23,29 @@ class GossipLogAnalyzer(val logFile: File) {
             BufferedReader(FileReader(logFile)).use { br ->
                 var line: String?
                 while (br.readLine().also { line = it } != null) {
-                    val csvElements = line?.split(",") ?: listOf()
-                    val channelUpdate = ChannelUpdate(
-                        csvElements[0],
-                        csvElements[1],
-                        csvElements[2],
-                        csvElements[3],
-                        csvElements[4],
-                        csvElements[5],
-                        csvElements[6],
-                        csvElements[7].toFloat(),
-                        csvElements[8],
-                        csvElements[9],
-                        csvElements[10].toFloat(),
-                    )
-
-                    channelSet.add(channelUpdate)
+                    try {
+                        val csvElements = line?.split(",") ?: listOf()
+                        val channelUpdate = ChannelUpdate(
+                            csvElements[0],
+                            csvElements[1],
+                            csvElements[2],
+                            csvElements[3],
+                            csvElements[4],
+                            csvElements[5],
+                            csvElements[6],
+                            csvElements[7].toFloat(),
+                            csvElements[8],
+                            csvElements[9],
+                            csvElements[10].toFloat(),
+                        )
+                        channelSet.add(channelUpdate)
+                    }catch (e: Exception){
+                        errorMsg.value = e.message
+                        processing.value = false
+                        analyzed.value = false
+                        analyzer.value = null
+                        return@launch
+                    }
 
                     processPerLine(line, lineCount.toFloat() / maxLine)
                     lineCount++

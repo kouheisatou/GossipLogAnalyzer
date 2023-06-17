@@ -60,8 +60,7 @@ fun main() = application {
                     Row {
                         val listState = rememberLazyListState()
                         LazyColumn(modifier = Modifier.weight(1f), state = listState) {
-                            items(analyzer.value!!.channels?.sortedByDescending { it.channelUpdates.size }
-                                ?: listOf()) {
+                            items(analyzer.value?.channels?.sortedByDescending { it.channelUpdates.size } ?: listOf()) {
                                 Row(modifier = Modifier.clickable {
                                     selectedChannel = it
                                 }) {
@@ -112,7 +111,7 @@ fun main() = application {
                                 )
 
                                 (chart.plot as XYPlot).renderer = XYLineAndShapeRenderer()
-                                        .apply { setSeriesLinesVisible(0, true) }
+                                    .apply { setSeriesLinesVisible(0, true) }
 
                                 ChartPanel(chart)
                             }
@@ -128,11 +127,6 @@ fun main() = application {
                     ) {
                         LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth().padding(20.dp))
                         Text(readingLine)
-                    }
-                } else {
-                    Button(onClick = {
-                    }) {
-                        Text("analyze")
                     }
                 }
             }
