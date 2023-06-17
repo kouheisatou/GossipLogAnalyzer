@@ -1,4 +1,3 @@
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,7 +18,6 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -28,10 +26,8 @@ import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
 import java.io.File
-import kotlin.system.exitProcess
 
 var logFilePath: MutableState<String?> = mutableStateOf(null)
-val selectedChannels = mutableStateListOf<Channel>()
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
@@ -40,15 +36,13 @@ fun main() = application {
             val analyzer by remember { mutableStateOf(GossipLogAnalyzer(File(logFilePath.value!!))) }
             var progress by remember { mutableStateOf(0f) }
             var readingLine by remember { mutableStateOf("") }
+            var selectedChannel by remember { mutableStateOf<Channel?>(null) }
 
             if (analyzer.analyzed.value) {
                 LazyColumn {
                     items(analyzer.channels.toList()) {
                         Row(modifier = Modifier.clickable {
-                            if (!selectedChannels.contains(it.second)) {
-                                selectedChannels.add(it.second)
-                                println(selectedChannels.toList())
-                            }
+                            selectedChannel = it.second
                         }) {
                             Text(it.first)
                             Spacer(modifier = Modifier.weight(1f))
@@ -56,22 +50,21 @@ fun main() = application {
                         }
                     }
                 }
-                for (channel in selectedChannels) {
-                    key(window){
-                        Window(
-                            onCloseRequest = { selectedChannels.remove(channel)},
-                            title = channel.shortChannelId,
-                            onKeyEvent = {
-                                if (it.key == Key.Escape) {
-                                    selectedChannels.remove(channel)
-                                }
-                                false
-                            },
-                        ) {
-                            LazyColumn {
-                                items(items = channel.channelUpdates) {
-                                    Text(it.toString())
-                                }
+                if (selectedChannel != null) {
+
+                    Window(
+                        onCloseRequest = { selectedChannel = null },
+                        title = selectedChannel!!.shortChannelId,
+                        onKeyEvent = {
+                            if (it.key == Key.Escape) {
+                                selectedChannel = null
+                            }
+                            false
+                        },
+                    ) {
+                        LazyColumn {
+                            items(items = selectedChannel?.channelUpdates ?: listOf()) {
+                                Text(it.toString())
                             }
                         }
                     }
@@ -116,46 +109,6 @@ fun main() = application {
                 }
             }
             window.contentPane.dropTarget = target
-        }
-    }
-}
-
-@Composable
-fun Dropdown(options: List<String>) {
-    val expanded = remember { mutableStateOf(false) }
-    val selectedOptionText = remember { mutableStateOf(options[0]) }
-
-    Box(
-        contentAlignment = Alignment.CenterStart,
-        modifier = Modifier
-            .size(250.dp, 50.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .border(BorderStroke(1.dp, Color.LightGray), RoundedCornerShape(4.dp))
-            .clickable { expanded.value = !expanded.value },
-    ) {
-        Text(
-            text = selectedOptionText.value,
-            modifier = Modifier.padding(start = 10.dp)
-        )
-        Icon(
-            Icons.Filled.ArrowDropDown,
-            "contentDescription",
-            Modifier.align(Alignment.CenterEnd)
-        )
-        DropdownMenu(
-            expanded = expanded.value,
-            onDismissRequest = { expanded.value = false }
-        ) {
-            options.forEach { selectionOption ->
-                DropdownMenuItem(
-                    onClick = {
-                        selectedOptionText.value = selectionOption
-                        expanded.value = false
-                    }
-                ) {
-                    Text(text = selectionOption)
-                }
-            }
         }
     }
 }
