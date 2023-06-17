@@ -24,6 +24,7 @@ kotlin {
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation("org.jetbrains.compose.ui:ui-tooling-preview-desktop:1.4.0")
+                implementation("org.jfree:jfreechart:1.5.4")
             }
         }
         val jvmTest by getting

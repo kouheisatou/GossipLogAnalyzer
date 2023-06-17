@@ -3,35 +3,35 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.nativeKeyCode
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import org.jfree.chart.ChartFactory
+import org.jfree.chart.ChartPanel
+import org.jfree.data.xy.XYDataItem
+import org.jfree.data.xy.XYSeries
+import org.jfree.data.xy.XYSeriesCollection
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
 import java.io.File
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
-import java.util.Calendar
+
 
 val analyzer = mutableStateOf<GossipLogAnalyzer?>(null)
 val errorMsg = mutableStateOf<String?>(null)
@@ -78,37 +78,41 @@ fun main() = application {
                     Window(
                         onCloseRequest = { selectedChannel = null },
                         title = selectedChannel!!.shortChannelId,
-                        onKeyEvent = {
-                            if (it.key == Key.Escape) {
-                                selectedChannel = null
-                            }
-                            false
-                        },
                     ) {
-                        Column {
 
-                            val data = mutableListOf<ChartDataEntry>()
-                            selectedChannel?.channelUpdates?.forEach {
-                                data.add(
-                                    ChartDataEntry(
-                                        LocalDateTime.parse(
-                                            it.timestamp,
-                                            DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
-                                        ).toEpochSecond(ZoneOffset.UTC).toFloat(),
-                                        it.htlcMaximumMsat,
-                                        "htlcMaximumMsat",
-                                    )
-                                )
-                            }
-                            val chartData = ChartData(data, 0.1f, 4f)
-                            Chart(chartData, modifier = Modifier.weight(1f))
+                        val data = XYSeriesCollection()
+                        val htlcMaximumMsatSeries = XYSeries("htlcMaximumMsat")
+                        selectedChannel!!.channelUpdates.forEach {
+                            val timeInt = LocalDateTime.parse(
+                                it.timestamp,
+                                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
+                            ).toEpochSecond(ZoneOffset.UTC)
 
-                            LazyColumn(modifier = Modifier.weight(1f)) {
-                                items(items = selectedChannel?.channelUpdates ?: listOf()) {
-                                    Text(it.toString())
+                            htlcMaximumMsatSeries.add(XYDataItem(timeInt, it.htlcMaximumMsat))
+                        }
+                        data.addSeries(htlcMaximumMsatSeries)
+
+                        val keyListener: KeyListener = object : KeyAdapter() {
+                            override fun keyPressed(e: KeyEvent) {
+                                if(e.keyCode == Key.Escape.nativeKeyCode){
+                                    selectedChannel = null
                                 }
                             }
+                            override fun keyReleased(e: KeyEvent?) {}
                         }
+                        window.contentPane.addKeyListener(keyListener)
+                        window.isFocusable = true
+                        window.contentPane.requestFocus()
+                        window.contentPane.add(
+                            ChartPanel(
+                                ChartFactory.createScatterPlot(
+                                    selectedChannel!!.shortChannelId,
+                                    "timestamp[ms]",
+                                    "htlcMaximumMsat[BTC]",
+                                    data,
+                                )
+                            )
+                        )
                     }
                 }
             } else {
