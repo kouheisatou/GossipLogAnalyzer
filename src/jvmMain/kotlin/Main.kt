@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -28,18 +29,19 @@ import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
 import java.io.File
 
-var logFilePath: MutableState<String?> = mutableStateOf(null)
+val analyzer = mutableStateOf<GossipLogAnalyzer?>(null)
+val errorMsg = mutableStateOf<String?>(null)
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterialApi::class)
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "GossipLogAnalyzer") {
-        if (logFilePath.value != null) {
-            val analyzer by remember { mutableStateOf(GossipLogAnalyzer(File(logFilePath.value!!))) }
-            var progress by remember { mutableStateOf(0f) }
-            var readingLine by remember { mutableStateOf("") }
-            var selectedChannel by remember { mutableStateOf<Channel?>(null) }
+        var progress by remember { mutableStateOf(0f) }
+        var readingLine by remember { mutableStateOf("") }
 
-            if (analyzer.analyzed.value) {
+        if (analyzer.value != null) {
+            if (analyzer.value!!.analyzed.value) {
+
+                var selectedChannel by remember { mutableStateOf<Channel?>(null) }
                 Column {
                     Row {
                         Text("ChannelID")
@@ -50,7 +52,8 @@ fun main() = application {
                     Row {
                         val listState = rememberLazyListState()
                         LazyColumn(modifier = Modifier.weight(1f), state = listState) {
-                            items(analyzer.channels?.sortedByDescending { it.channelUpdates.size } ?: listOf()) {
+                            items(analyzer.value!!.channels?.sortedByDescending { it.channelUpdates.size }
+                                ?: listOf()) {
                                 Row(modifier = Modifier.clickable {
                                     selectedChannel = it
                                 }) {
@@ -87,28 +90,18 @@ fun main() = application {
                     }
                 }
             } else {
-                if (analyzer.processing.value) {
+                if (analyzer.value!!.processing.value) {
                     LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
                     Text(readingLine)
                 } else {
                     Button(onClick = {
-                        analyzer.analyze(
-                            onFinished = {
-                                progress = 0f
-                                readingLine = ""
-                            },
-                            processPerLine = { r, p ->
-                                progress = p
-                                readingLine = r ?: ""
-                            }
-                        )
                     }) {
                         Text("analyze")
                     }
                 }
             }
         } else {
-            Text("Drop log file here!", modifier = Modifier.fillMaxSize())
+            Text("Drop log file here!", modifier = Modifier.fillMaxSize(), textAlign = TextAlign.Center)
 
             val target = object : DropTarget() {
                 @Synchronized
@@ -117,8 +110,24 @@ fun main() = application {
                         evt.acceptDrop(DnDConstants.ACTION_REFERENCE)
                         val droppedFiles = evt.transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<*>
                         droppedFiles.first()?.let {
-                            logFilePath.value = (it as File).absolutePath
-                            println(logFilePath.value!!)
+                            val logFile = File((it as File).absolutePath)
+                            println(logFile.path)
+                            if (!logFile.path.endsWith(".csv")) {
+                                errorMsg.value = "File extension is not CSV."
+                                return@let
+                            }
+
+                            analyzer.value = GossipLogAnalyzer(logFile)
+                            analyzer.value!!.analyze(
+                                onFinished = {
+                                    progress = 0f
+                                    readingLine = ""
+                                },
+                                processPerLine = { r, p ->
+                                    progress = p
+                                    readingLine = r ?: ""
+                                }
+                            )
                         }
                     } catch (ex: Exception) {
                         ex.printStackTrace()
@@ -126,6 +135,25 @@ fun main() = application {
                 }
             }
             window.contentPane.dropTarget = target
+        }
+
+        if (errorMsg.value != null) {
+            AlertDialog(
+                onDismissRequest = {
+                    errorMsg.value = null
+                },
+                buttons = {
+                    TextButton(
+                        onClick = {
+                            errorMsg.value = null
+                        }
+                    ) {
+                        Text("OK")
+                    }
+                },
+                title = { Text("error") },
+                text = { Text(errorMsg.value ?: "") }
+            )
         }
     }
 }
