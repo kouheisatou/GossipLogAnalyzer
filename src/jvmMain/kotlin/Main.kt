@@ -8,8 +8,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.nativeKeyCode
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -17,6 +19,8 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import org.jfree.chart.ChartFactory
 import org.jfree.chart.ChartPanel
+import org.jfree.chart.plot.XYPlot
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer
 import org.jfree.data.xy.XYDataItem
 import org.jfree.data.xy.XYSeries
 import org.jfree.data.xy.XYSeriesCollection
@@ -78,40 +82,40 @@ fun main() = application {
                     Window(
                         onCloseRequest = { selectedChannel = null },
                         title = selectedChannel!!.shortChannelId,
+                        onKeyEvent = {
+                            if (it.key.keyCode == Key.Escape.keyCode) {
+                                selectedChannel = null
+                            }
+                            false
+                        }
                     ) {
 
-                        val data = XYSeriesCollection()
-                        val htlcMaximumMsatSeries = XYSeries("htlcMaximumMsat")
-                        selectedChannel!!.channelUpdates.forEach {
-                            val timeInt = LocalDateTime.parse(
-                                it.timestamp,
-                                DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
-                            ).toEpochSecond(ZoneOffset.UTC)
+                        SwingPanel(
+                            factory = {
+                                val data = XYSeriesCollection()
+                                val htlcMaximumMsatSeries = XYSeries("htlcMaximumMsat", true)
+                                selectedChannel!!.channelUpdates.forEach {
+                                    val timeInt = LocalDateTime.parse(
+                                        it.timestamp,
+                                        DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
+                                    ).toEpochSecond(ZoneOffset.UTC)
 
-                            htlcMaximumMsatSeries.add(XYDataItem(timeInt, it.htlcMaximumMsat))
-                        }
-                        data.addSeries(htlcMaximumMsatSeries)
-
-                        val keyListener: KeyListener = object : KeyAdapter() {
-                            override fun keyPressed(e: KeyEvent) {
-                                if(e.keyCode == Key.Escape.nativeKeyCode){
-                                    selectedChannel = null
+                                    htlcMaximumMsatSeries.add(XYDataItem(timeInt, it.htlcMaximumMsat))
                                 }
-                            }
-                            override fun keyReleased(e: KeyEvent?) {}
-                        }
-                        window.contentPane.addKeyListener(keyListener)
-                        window.isFocusable = true
-                        window.contentPane.requestFocus()
-                        window.contentPane.add(
-                            ChartPanel(
-                                ChartFactory.createScatterPlot(
+                                data.addSeries(htlcMaximumMsatSeries)
+
+                                val chart = ChartFactory.createScatterPlot(
                                     selectedChannel!!.shortChannelId,
                                     "timestamp[ms]",
                                     "htlcMaximumMsat[BTC]",
                                     data,
                                 )
-                            )
+
+                                (chart.plot as XYPlot).renderer = XYLineAndShapeRenderer()
+                                        .apply { setSeriesLinesVisible(0, true) }
+
+                                ChartPanel(chart)
+                            }
                         )
                     }
                 }
