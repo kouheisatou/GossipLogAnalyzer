@@ -23,6 +23,7 @@ kotlin {
         val jvmMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
+                implementation("org.jetbrains.compose.ui:ui-tooling-preview-desktop:1.4.0")
             }
         }
         val jvmTest by getting

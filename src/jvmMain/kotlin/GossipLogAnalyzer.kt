@@ -32,10 +32,10 @@ class GossipLogAnalyzer(val logFile: File) {
                         csvElements[4],
                         csvElements[5],
                         csvElements[6],
-                        csvElements[7],
+                        csvElements[7].toFloat(),
                         csvElements[8],
                         csvElements[9],
-                        csvElements[10],
+                        csvElements[10].toFloat(),
                     )
 
                     channelSet.add(channelUpdate)

@@ -28,6 +28,10 @@ import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
 import java.io.File
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
 
 val analyzer = mutableStateOf<GossipLogAnalyzer?>(null)
 val errorMsg = mutableStateOf<String?>(null)
@@ -46,7 +50,7 @@ fun main() = application {
                     Row {
                         Text("ChannelID")
                         Spacer(modifier = Modifier.weight(1f))
-                        Text("UpdateCount")
+                        Text("Updates")
                     }
                     Divider(modifier = Modifier.fillMaxWidth())
                     Row {
@@ -81,10 +85,28 @@ fun main() = application {
                             false
                         },
                     ) {
-                        // todo show channel capacity history as a graph
-                        LazyColumn {
-                            items(items = selectedChannel?.channelUpdates ?: listOf()) {
-                                Text(it.toString())
+                        Column {
+
+                            val data = mutableListOf<ChartDataEntry>()
+                            selectedChannel?.channelUpdates?.forEach {
+                                data.add(
+                                    ChartDataEntry(
+                                        LocalDateTime.parse(
+                                            it.timestamp,
+                                            DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
+                                        ).toEpochSecond(ZoneOffset.UTC).toFloat(),
+                                        it.htlcMaximumMsat,
+                                        "htlcMaximumMsat",
+                                    )
+                                )
+                            }
+                            val chartData = ChartData(data, 0.1f, 4f)
+                            Chart(chartData, modifier = Modifier.weight(1f))
+
+                            LazyColumn(modifier = Modifier.weight(1f)) {
+                                items(items = selectedChannel?.channelUpdates ?: listOf()) {
+                                    Text(it.toString())
+                                }
                             }
                         }
                     }
@@ -117,17 +139,21 @@ fun main() = application {
                                 return@let
                             }
 
-                            analyzer.value = GossipLogAnalyzer(logFile)
-                            analyzer.value!!.analyze(
-                                onFinished = {
-                                    progress = 0f
-                                    readingLine = ""
-                                },
-                                processPerLine = { r, p ->
-                                    progress = p
-                                    readingLine = r ?: ""
-                                }
-                            )
+                            try {
+                                analyzer.value = GossipLogAnalyzer(logFile)
+                                analyzer.value!!.analyze(
+                                    onFinished = {
+                                        progress = 0f
+                                        readingLine = ""
+                                    },
+                                    processPerLine = { r, p ->
+                                        progress = p
+                                        readingLine = r ?: ""
+                                    }
+                                )
+                            } catch (e: Exception) {
+                                errorMsg.value = e.message
+                            }
                         }
                     } catch (ex: Exception) {
                         ex.printStackTrace()
