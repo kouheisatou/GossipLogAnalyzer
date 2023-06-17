@@ -14,7 +14,7 @@ class GossipLogAnalyzer(val logFile: File) {
     var lineCount = 0
     var maxLine = Files.lines(Paths.get(logFile.path)).count()
 
-    private val channelSet = ChannelSet()
+    private val channelHashSet = ChannelHashSet()
     var channels: List<Channel>? = null
 
     fun analyze(onFinished: () -> Unit, processPerLine: (readingLine: String?, progress: Float) -> Unit) {
@@ -38,7 +38,7 @@ class GossipLogAnalyzer(val logFile: File) {
                             csvElements[9],
                             csvElements[10].toFloat(),
                         )
-                        channelSet.add(channelUpdate)
+                        channelHashSet.add(channelUpdate)
                     }catch (e: Exception){
                         errorMsg.value = e.message
                         processing.value = false
@@ -51,7 +51,7 @@ class GossipLogAnalyzer(val logFile: File) {
                     lineCount++
                 }
 
-                channels = channelSet.toList()
+                channels = channelHashSet.toList()
                 onFinished()
                 processing.value = false
                 analyzed.value = true
