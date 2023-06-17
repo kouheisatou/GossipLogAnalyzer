@@ -2,6 +2,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -39,15 +40,30 @@ fun main() = application {
             var selectedChannel by remember { mutableStateOf<Channel?>(null) }
 
             if (analyzer.analyzed.value) {
-                LazyColumn {
-                    items(analyzer.channels?.sortedByDescending { it.channelUpdates.size } ?: listOf()) {
-                        Row(modifier = Modifier.clickable {
-                            selectedChannel = it
-                        }) {
-                            Text(it.shortChannelId)
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(it.channelUpdates.size.toString())
+                Column {
+                    Row {
+                        Text("ChannelID")
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text("UpdateCount")
+                    }
+                    Divider(modifier = Modifier.fillMaxWidth())
+                    Row {
+                        val listState = rememberLazyListState()
+                        LazyColumn(modifier = Modifier.weight(1f), state = listState) {
+                            items(analyzer.channels?.sortedByDescending { it.channelUpdates.size } ?: listOf()) {
+                                Row(modifier = Modifier.clickable {
+                                    selectedChannel = it
+                                }) {
+                                    Text(it.shortChannelId)
+                                    Spacer(modifier = Modifier.weight(1f))
+                                    Text(it.channelUpdates.size.toString())
+                                }
+                            }
                         }
+                        VerticalScrollbar(
+                            modifier = Modifier.fillMaxHeight(),
+                            adapter = rememberScrollbarAdapter(listState),
+                        )
                     }
                 }
                 if (selectedChannel != null) {
