@@ -39,6 +39,9 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import kotlin.system.exitProcess
+enum class AnalyzerWindowState {
+    Initialized, Analyzing, Analyzed
+}
 
 abstract class CSVAnalyzer {
 
@@ -82,6 +85,10 @@ abstract class CSVAnalyzer {
 
     abstract fun analyzeCSVLine(lineText: String?)
     abstract fun onAnalyzingFinished()
+
+    open fun onLogFileLoaded(logFile: File): String?{
+        return null
+    }
 }
 
 @Composable
@@ -100,6 +107,12 @@ fun CSVAnalyzerWindow(
 
             if (!it.path.endsWith(".csv")) {
                 analyzer.errorMsg.value = "File extension is not CSV."
+                return@DropFileWindow
+            }
+
+            val errorMsg = analyzer.onLogFileLoaded(it)
+            if(errorMsg != null){
+                analyzer.errorMsg.value = errorMsg
                 return@DropFileWindow
             }
 

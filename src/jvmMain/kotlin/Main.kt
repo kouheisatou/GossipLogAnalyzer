@@ -33,14 +33,53 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 
-private val gossipAnalyzer = GossipLogAnalyzer()
-private val topologyAnalyzer = TopologyAnalyzer()
+val gossipAnalyzer = GossipLogAnalyzer()
+val topologyAnalyzer = TopologyAnalyzer()
+
+val channels = ChannelHashSet()
+val nodes = NodeHashSet()
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
-    CSVAnalyzerWindow(topologyAnalyzer, "Drop channel_announcement log file here!"){
+    if (gossipAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
+        CSVAnalyzerWindow(
+            topologyAnalyzer,
+            "Drop channel_announcement log file here!",
+        ) {
+
+            Column {
+                Row {
+                    Text("NodeID")
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text("Channels")
+                }
+                Divider(modifier = Modifier.fillMaxWidth())
+
+                Row {
+                    val listState = rememberLazyListState()
+                    LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
+                        items(topologyAnalyzer.nodeListForDisplay ?: listOf()) {
+                            Row {
+                                Text(it.id)
+                                Spacer(modifier = Modifier.weight(1f))
+                                Text(it.channels.size.toString())
+                            }
+                        }
+                    }
+                    VerticalScrollbar(
+                        modifier = Modifier.fillMaxHeight(),
+                        adapter = rememberScrollbarAdapter(listState),
+                    )
+
+                }
+            }
+        }
     }
-    CSVAnalyzerWindow(gossipAnalyzer, "Drop channel_update log file here!"){
+
+    CSVAnalyzerWindow(
+        gossipAnalyzer,
+        "Drop channel_update log file here!",
+    ) {
 
         var selectedChannel by remember { mutableStateOf<Channel?>(null) }
 
@@ -54,7 +93,7 @@ fun main() = application {
             Row {
                 val listState = rememberLazyListState()
                 LazyColumn(modifier = Modifier.weight(1f), state = listState) {
-                    items(gossipAnalyzer.channels ?: listOf()) {
+                    items(gossipAnalyzer.channelsForDisplay ?: listOf()) {
                         Row(
                             modifier = Modifier
                                 .clickable {
@@ -92,19 +131,19 @@ fun main() = application {
                             }
 
                             Key.DirectionDown.keyCode -> {
-                                val index = gossipAnalyzer.channels?.indexOf(selectedChannel)?.plus(1)
-                                if (index != null && gossipAnalyzer.channels != null) {
-                                    if (index in 0 until gossipAnalyzer.channels!!.size) {
-                                        selectedChannel = gossipAnalyzer.channels!![index]
+                                val index = gossipAnalyzer.channelsForDisplay?.indexOf(selectedChannel)?.plus(1)
+                                if (index != null && gossipAnalyzer.channelsForDisplay != null) {
+                                    if (index in 0 until gossipAnalyzer.channelsForDisplay!!.size) {
+                                        selectedChannel = gossipAnalyzer.channelsForDisplay!![index]
                                     }
                                 }
                             }
 
                             Key.DirectionUp.keyCode -> {
-                                val index = gossipAnalyzer.channels?.indexOf(selectedChannel)?.minus(1)
-                                if (index != null && gossipAnalyzer.channels != null) {
-                                    if (index in 0 until gossipAnalyzer.channels!!.size) {
-                                        selectedChannel = gossipAnalyzer.channels!![index]
+                                val index = gossipAnalyzer.channelsForDisplay?.indexOf(selectedChannel)?.minus(1)
+                                if (index != null && gossipAnalyzer.channelsForDisplay != null) {
+                                    if (index in 0 until gossipAnalyzer.channelsForDisplay!!.size) {
+                                        selectedChannel = gossipAnalyzer.channelsForDisplay!![index]
                                     }
                                 }
                             }
