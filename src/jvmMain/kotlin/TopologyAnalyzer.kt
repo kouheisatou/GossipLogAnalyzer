@@ -5,6 +5,7 @@ import java.io.File
 class TopologyAnalyzer : CSVAnalyzer() {
 
     var nodeListForDisplay = mutableStateOf<List<Node>?>(null)
+    val selectedNode = mutableStateOf<Node?>(null)
 
     override fun analyzeCSVLine(lineText: String?) {
         if (lineText == null) return

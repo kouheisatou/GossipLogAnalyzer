@@ -5,6 +5,7 @@ class GossipLogAnalyzer : CSVAnalyzer() {
 
     // for displaying channel list on compose window
     var channelsForDisplay = mutableStateOf<List<Channel>?>(null)
+    val selectedChannel = mutableStateOf<Channel?>(null)
 
     override fun analyzeCSVLine(lineText: String?) {
         if (lineText == null) return

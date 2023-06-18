@@ -18,7 +18,6 @@ val nodes = NodeHashSet()
 fun main() = application {
     if (gossipAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
 
-        val selectedNode = mutableStateOf<Node?>(null)
         CSVAnalyzerWindow(
             "NodeList",
             topologyAnalyzer,
@@ -31,68 +30,32 @@ fun main() = application {
                 }
             },
             listTopRowLayout = {
-                Column {
-
-                    var nodeId by remember { mutableStateOf("") }
-                    var showDialog by remember { mutableStateOf(false) }
-                    var result by remember { mutableStateOf<Node?>(null) }
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            TextField(
-                                value = nodeId,
-                                onValueChange = {
-                                    nodeId = it
-                                }
-                            )
-                            IconButton(
-                                onClick = {
-                                    result = nodes.find(Node(nodeId))
-                                    showDialog = true
-                                }
-                            ) {
-                                Text("🔍")
-                            }
-                        }
-                    }
-                    if (showDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showDialog = false },
-                            buttons = {
-                                Row {
-                                    TextButton(onClick = { showDialog = false }) { Text("close") }
-                                    if (result != null) {
-                                        TextButton(onClick = {
-                                            selectedNode.value = result
-                                            showDialog = false
-                                        }) {
-                                            Text("open detail")
-                                        }
-                                    }
-                                }
-                            },
-                            text = { Text(result?.id.toString()) }
-                        )
-                    }
-
-                    Row {
-                        Text("NodeID")
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text("Channels")
-                    }
+                Row {
+                    Text("NodeID")
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text("Channels")
                 }
             },
-            listItemLayout = {
-                Text(it.id)
-                Spacer(modifier = Modifier.weight(1f))
-                Text(it.channels.size.toString())
+            listItemLayout = { node: Node ->
+                Row {
+                    Text(node.id)
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(node.channels.size.toString())
+                }
             },
             onItemSelected = {
                 println(it)
+            },
+            selectedItem = topologyAnalyzer.selectedNode,
+            findById = {
+                nodes.find(Node(it))
+            },
+            findResultText = {
+                it?.id.toString()
             }
         )
     }
 
-    val selectedChannel = mutableStateOf<Channel?>(null)
     CSVAnalyzerWindow(
         "GossipLogAnalyzer",
         gossipAnalyzer,
@@ -104,65 +67,29 @@ fun main() = application {
                 ChannelDetailComponent(selected)
             }
         },
-        selectedItem = selectedChannel,
+        selectedItem = gossipAnalyzer.selectedChannel,
         listTopRowLayout = {
-            Column {
-
-                var channelId by remember { mutableStateOf("") }
-                var showDialog by remember { mutableStateOf(false) }
-                var result by remember { mutableStateOf<Channel?>(null) }
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        TextField(
-                            value = channelId,
-                            onValueChange = {
-                                channelId = it
-                            }
-                        )
-                        IconButton(
-                            onClick = {
-                                result = channels.findChannelById(channelId)
-                                showDialog = true
-                            }
-                        ) {
-                            Text("🔍")
-                        }
-                    }
-                }
-                if (showDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showDialog = false },
-                        buttons = {
-                            Row {
-                                TextButton(onClick = { showDialog = false }) { Text("close") }
-                                if (result != null) {
-                                    TextButton(onClick = {
-                                        selectedChannel.value = result
-                                        showDialog = false
-                                    }) {
-                                        Text("open detail")
-                                    }
-                                }
-                            }
-                        },
-                        text = { Text(result?.shortChannelId.toString()) }
-                    )
-                }
-
-                Row {
-                    Text("ChannelID")
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text("Updates")
-                }
+            Row {
+                Text("ChannelID")
+                Spacer(modifier = Modifier.weight(1f))
+                Text("Updates")
             }
         },
-        listItemLayout = {
-            Text(it.shortChannelId)
-            Spacer(modifier = Modifier.weight(1f))
-            Text(it.channelUpdates.size.toString())
+        listItemLayout = { channel: Channel ->
+            Row {
+                Text(channel.shortChannelId)
+                Spacer(modifier = Modifier.weight(1f))
+                Text(channel.channelUpdates.size.toString())
+            }
         },
         onItemSelected = {
             println(it)
+        },
+        findById = {
+            channels.findChannelById(it)
+        },
+        findResultText = {
+            it?.shortChannelId.toString()
         }
     )
 }

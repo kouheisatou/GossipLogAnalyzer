@@ -25,14 +25,31 @@ fun <T> SelectableListComponent(
     listData: List<T>,
     detailWindowTitle: (selectedItem: T?) -> String,
     detailWindowLayout: @Composable FrameWindowScope.(selectedItem: T?) -> Unit,
-    listItemLayout: @Composable RowScope.(listItem: T) -> Unit,
+    listItemLayout: @Composable (listItem: T) -> Unit,
     listTopRowLayout: (@Composable () -> Unit)? = null,
     listTitle: String? = null,
     modifier: Modifier = Modifier,
     externalControlledSelectedItem: MutableState<T?>? = null,
     onItemSelected: ((selectedItem: T) -> Unit)? = null
 ) {
-    val selectedItem = externalControlledSelectedItem ?: mutableStateOf<T?>(null)
+
+    var selectedItem by remember { mutableStateOf<T?>(null) }
+
+    fun setSelected(newSelectedItem: T?) {
+        if (externalControlledSelectedItem != null) {
+            externalControlledSelectedItem.value = newSelectedItem
+        } else {
+            selectedItem = newSelectedItem
+        }
+    }
+
+    fun getSelected(): T? {
+        return if (externalControlledSelectedItem != null) {
+            externalControlledSelectedItem.value
+        } else {
+            selectedItem
+        }
+    }
 
     Column(modifier = modifier) {
         if (listTitle != null) {
@@ -46,26 +63,24 @@ fun <T> SelectableListComponent(
             val listState = rememberLazyListState()
             LazyColumn(modifier = Modifier.weight(1f), state = listState) {
                 items(listData) {
-                    Column {
-                        Row(
-                            modifier = Modifier
-                                .clickable {
-                                    selectedItem.value = it
-                                    if (onItemSelected != null) {
-                                        onItemSelected(it)
-                                    }
+                    Column(
+                        modifier = Modifier
+                            .clickable {
+                                setSelected(it)
+                                if (onItemSelected != null) {
+                                    onItemSelected(it)
                                 }
-                                .background(
-                                    if (selectedItem.value == it) {
-                                        Color.LightGray
-                                    } else {
-                                        Color.White
-                                    }
-                                )
-                                .fillMaxWidth()
-                        ) {
-                            listItemLayout(it)
-                        }
+                            }
+                            .background(
+                                if (getSelected() == it) {
+                                    Color.LightGray
+                                } else {
+                                    Color.White
+                                }
+                            )
+                            .fillMaxWidth()
+                    ) {
+                        listItemLayout(it)
                         Divider()
                     }
                 }
@@ -76,34 +91,34 @@ fun <T> SelectableListComponent(
             )
         }
     }
-    if (selectedItem.value != null) {
+    if (getSelected() != null) {
 
         Window(
-            onCloseRequest = { selectedItem.value = null },
-            title = detailWindowTitle(selectedItem.value),
+            onCloseRequest = { setSelected(null) },
+            title = detailWindowTitle(getSelected()),
             onKeyEvent = {
                 if (it.type == KeyEventType.KeyDown) {
                     when (it.key.keyCode) {
                         Key.Escape.keyCode -> {
-                            selectedItem.value = null
+                            setSelected(null)
                         }
 
                         Key.DirectionDown.keyCode -> {
-                            val index = listData.indexOf(selectedItem.value) + 1
+                            val index = listData.indexOf(getSelected()) + 1
                             if (index in listData.indices) {
-                                selectedItem.value = listData[index]
+                                setSelected(listData[index])
                                 if (onItemSelected != null) {
-                                    onItemSelected(selectedItem.value!!)
+                                    onItemSelected(getSelected()!!)
                                 }
                             }
                         }
 
                         Key.DirectionUp.keyCode -> {
-                            val index = listData.indexOf(selectedItem.value) - 1
+                            val index = listData.indexOf(getSelected()) - 1
                             if (index in listData.indices) {
-                                selectedItem.value = listData[index]
+                                setSelected(listData[index])
                                 if (onItemSelected != null) {
-                                    onItemSelected(selectedItem.value!!)
+                                    onItemSelected(getSelected()!!)
                                 }
                             }
                         }
@@ -112,7 +127,7 @@ fun <T> SelectableListComponent(
                 false
             }
         ) {
-            detailWindowLayout(selectedItem.value)
+            detailWindowLayout(getSelected())
         }
     }
 }

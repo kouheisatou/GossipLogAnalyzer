@@ -16,6 +16,10 @@ class Node(val id: String) {
     }
 
     override fun toString(): String {
+        var channelIdsText = ""
+        channels.forEach {
+            channelIdsText += it.shortChannelId + ","
+        }
         return "Node(id='$id', channels=$channels)"
     }
 }
@@ -31,9 +35,9 @@ fun NodeDetailComponent(node: Node) {
             }
         },
         listItemLayout = {
-            Column{
+            Column {
                 Text(it.shortChannelId)
-                Row{
+                Row {
                     Text(it.node1?.id.toString())
                     Text(" - ", modifier = Modifier.weight(1f))
                     Text(it.node2?.id.toString())

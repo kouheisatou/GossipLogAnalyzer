@@ -1,45 +1,19 @@
-import androidx.compose.foundation.VerticalScrollbar
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.UiComposable
-import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.FrameWindowScope
-import androidx.compose.ui.window.Window
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jfree.chart.ChartFactory
-import org.jfree.chart.ChartPanel
-import org.jfree.chart.plot.XYPlot
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer
-import org.jfree.data.xy.XYDataItem
-import org.jfree.data.xy.XYSeries
-import org.jfree.data.xy.XYSeriesCollection
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 import kotlin.system.exitProcess
 
 enum class AnalyzerWindowState {
@@ -104,9 +78,11 @@ fun <T> CSVAnalyzerWindow(
     detailWindowTitle: (selectedItem: T?) -> String,
     detailWindowLayout: @Composable FrameWindowScope.(selectedItem: T?) -> Unit,
     listTopRowLayout: @Composable () -> Unit,
-    listItemLayout: @Composable RowScope.(listItem: T) -> Unit,
+    listItemLayout: @Composable (listItem: T) -> Unit,
+    findById: (searchText: String) -> T?,
+    findResultText: (result: T?) -> String,
     selectedItem: MutableState<T?> = mutableStateOf(null),
-    onItemSelected: ((selectedItem: T) -> Unit)? = null
+    onItemSelected: ((selectedItem: T) -> Unit)? = null,
 ) {
     var progress by remember { mutableStateOf(0f) }
     var readingLine by remember { mutableStateOf("") }
@@ -162,7 +138,52 @@ fun <T> CSVAnalyzerWindow(
                     detailWindowTitle,
                     detailWindowLayout,
                     listItemLayout,
-                    listTopRowLayout = listTopRowLayout,
+                    listTopRowLayout = {
+                        Column {
+
+                            var searchText by remember { mutableStateOf("") }
+                            var showDialog by remember { mutableStateOf(false) }
+                            var result by remember { mutableStateOf<T?>(null) }
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    TextField(
+                                        value = searchText,
+                                        onValueChange = {
+                                            searchText = it
+                                        }
+                                    )
+                                    IconButton(
+                                        onClick = {
+                                            result = findById(searchText)
+                                            showDialog = true
+                                        }
+                                    ) {
+                                        Text("🔍")
+                                    }
+                                }
+                            }
+                            if (showDialog) {
+                                AlertDialog(
+                                    onDismissRequest = { showDialog = false },
+                                    buttons = {
+                                        Row {
+                                            TextButton(onClick = { showDialog = false }) { Text("close") }
+                                            if (result != null) {
+                                                TextButton(onClick = {
+                                                    selectedItem.value = result
+                                                    showDialog = false
+                                                }) {
+                                                    Text("open detail")
+                                                }
+                                            }
+                                        }
+                                    },
+                                    text = { Text(findResultText(result)) }
+                                )
+                            }
+                            listTopRowLayout()
+                        }
+                    },
                     externalControlledSelectedItem = selectedItem,
                     onItemSelected = onItemSelected,
                 )
