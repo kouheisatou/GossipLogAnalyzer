@@ -80,9 +80,8 @@ fun <T> CSVAnalyzerWindow(
     listTopRowLayout: @Composable () -> Unit,
     listItemLayout: @Composable (listItem: T) -> Unit,
     findById: (searchText: String) -> T?,
-    findResultText: (result: T?) -> String,
     selectedItem: MutableState<T?> = mutableStateOf(null),
-    onItemSelected: ((selectedItem: T) -> Unit)? = null,
+    fetchLatestDetail: (selectedItem: T) -> T?,
 ) {
     var progress by remember { mutableStateOf(0f) }
     var readingLine by remember { mutableStateOf("") }
@@ -142,7 +141,6 @@ fun <T> CSVAnalyzerWindow(
                         Column {
 
                             var searchText by remember { mutableStateOf("") }
-                            var showDialog by remember { mutableStateOf(false) }
                             var result by remember { mutableStateOf<T?>(null) }
                             Column {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -155,37 +153,21 @@ fun <T> CSVAnalyzerWindow(
                                     IconButton(
                                         onClick = {
                                             result = findById(searchText)
-                                            showDialog = true
+                                            if(result != null) {
+                                                selectedItem.value = result
+                                            }
                                         }
                                     ) {
                                         Text("🔍")
                                     }
                                 }
                             }
-                            if (showDialog) {
-                                AlertDialog(
-                                    onDismissRequest = { showDialog = false },
-                                    buttons = {
-                                        Row {
-                                            TextButton(onClick = { showDialog = false }) { Text("close") }
-                                            if (result != null) {
-                                                TextButton(onClick = {
-                                                    selectedItem.value = result
-                                                    showDialog = false
-                                                }) {
-                                                    Text("open detail")
-                                                }
-                                            }
-                                        }
-                                    },
-                                    text = { Text(findResultText(result)) }
-                                )
-                            }
+
                             listTopRowLayout()
                         }
                     },
                     externalControlledSelectedItem = selectedItem,
-                    onItemSelected = onItemSelected,
+                    fetchLatestDetail = fetchLatestDetail,
                 )
             }
         }

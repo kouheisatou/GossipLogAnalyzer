@@ -30,7 +30,8 @@ class ChannelHashSet {
         }
     }
 
-    fun findChannelById(channelId: String): Channel? {
+    fun findChannelById(channelId: String?): Channel? {
+        channelId ?: return null
         val channelHolder = hashMap[getHashMapIndex(channelId)] ?: return null
 
         for (channel in channelHolder) {

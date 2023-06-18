@@ -1,4 +1,3 @@
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,7 +36,7 @@ class Channel(
     }
 
     override fun toString(): String {
-        return "Channel(shortChannelId='$shortChannelId', node1=${node1?.id}, node2=${node2?.id}, channelUpdates=$channelUpdates)"
+        return "Channel(shortChannelId='$shortChannelId', node1=${node1?.id}, node2=${node2?.id})"
     }
 
 }
@@ -92,8 +91,8 @@ fun ChannelDetailComponent(channel: Channel) {
                 listItemLayout = {
                     Text(it?.id.toString())
                 },
-                onItemSelected = {
-                    println(it)
+                fetchLatestDetail = {
+                    nodes.findByNodeId(it?.id)
                 }
             )
 

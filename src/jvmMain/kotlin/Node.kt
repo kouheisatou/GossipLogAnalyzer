@@ -20,7 +20,7 @@ class Node(val id: String) {
         channels.forEach {
             channelIdsText += it.shortChannelId + ","
         }
-        return "Node(id='$id', channels=$channels)"
+        return "Node(id='$id', channels=$channelIdsText)"
     }
 }
 
@@ -45,8 +45,8 @@ fun NodeDetailComponent(node: Node) {
             }
         },
         listTitle = "Channels",
-        onItemSelected = {
-            println(it)
+        fetchLatestDetail = {
+            channels.findChannelById(it.shortChannelId)
         }
     )
 }

@@ -1,9 +1,5 @@
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.application
 
@@ -43,16 +39,13 @@ fun main() = application {
                     Text(node.channels.size.toString())
                 }
             },
-            onItemSelected = {
-                println(it)
+            fetchLatestDetail = {
+                nodes.findByNodeId(it.id)
             },
             selectedItem = topologyAnalyzer.selectedNode,
             findById = {
-                nodes.find(Node(it))
+                nodes.findByNodeId(it)
             },
-            findResultText = {
-                it?.id.toString()
-            }
         )
     }
 
@@ -82,14 +75,11 @@ fun main() = application {
                 Text(channel.channelUpdates.size.toString())
             }
         },
-        onItemSelected = {
-            println(it)
+        fetchLatestDetail = {
+            channels.findChannelById(it.shortChannelId)
         },
         findById = {
             channels.findChannelById(it)
         },
-        findResultText = {
-            it?.shortChannelId.toString()
-        }
     )
 }

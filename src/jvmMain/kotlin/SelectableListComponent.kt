@@ -22,15 +22,15 @@ import androidx.compose.ui.window.Window
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun <T> SelectableListComponent(
-    listData: List<T>,
+    listData: List<T>, // This data is only for displaying list, so it is not always latest. DO NOT refer for getting detail.
     detailWindowTitle: (selectedItem: T?) -> String,
     detailWindowLayout: @Composable FrameWindowScope.(selectedItem: T?) -> Unit,
     listItemLayout: @Composable (listItem: T) -> Unit,
+    fetchLatestDetail: (selectedItem: T) -> T?,
     listTopRowLayout: (@Composable () -> Unit)? = null,
     listTitle: String? = null,
     modifier: Modifier = Modifier,
     externalControlledSelectedItem: MutableState<T?>? = null,
-    onItemSelected: ((selectedItem: T) -> Unit)? = null
 ) {
 
     var selectedItem by remember { mutableStateOf<T?>(null) }
@@ -66,10 +66,7 @@ fun <T> SelectableListComponent(
                     Column(
                         modifier = Modifier
                             .clickable {
-                                setSelected(it)
-                                if (onItemSelected != null) {
-                                    onItemSelected(it)
-                                }
+                                setSelected(fetchLatestDetail(it))
                             }
                             .background(
                                 if (getSelected() == it) {
@@ -106,10 +103,8 @@ fun <T> SelectableListComponent(
                         Key.DirectionDown.keyCode -> {
                             val index = listData.indexOf(getSelected()) + 1
                             if (index in listData.indices) {
-                                setSelected(listData[index])
-                                if (onItemSelected != null) {
-                                    onItemSelected(getSelected()!!)
-                                }
+                                val nextEntry = listData[index]
+                                setSelected(fetchLatestDetail(nextEntry))
                             }
                         }
 
@@ -117,8 +112,9 @@ fun <T> SelectableListComponent(
                             val index = listData.indexOf(getSelected()) - 1
                             if (index in listData.indices) {
                                 setSelected(listData[index])
-                                if (onItemSelected != null) {
-                                    onItemSelected(getSelected()!!)
+                                if (index in listData.indices) {
+                                    val prevEntry = listData[index]
+                                    setSelected(fetchLatestDetail(prevEntry))
                                 }
                             }
                         }

@@ -5,17 +5,17 @@ private const val HASH_MAP_SIZE = 10000
 class NodeHashSet {
     private val hashMap: Array<MutableList<Node>?> = Array(HASH_MAP_SIZE) { null }
 
-    private fun getHashMapIndex(node: Node): Int {
+    private fun calcHashMapIndex(node: Node): Int {
         return node.hashCode().absoluteValue % HASH_MAP_SIZE
     }
 
     fun add(node: Node, channel: Channel) {
-        val nodeHolder = hashMap[getHashMapIndex(node)]
-        if (nodeHolder == null) {
-            hashMap[getHashMapIndex(node)] = mutableListOf(node.apply { channels.add(channel) })
+        val holder = hashMap[calcHashMapIndex(node)]
+        if (holder == null) {
+            hashMap[calcHashMapIndex(node)] = mutableListOf(node.apply { channels.add(channel) })
         } else {
             var nodeAlreadyExists = false
-            for (nodeInHolder in nodeHolder) {
+            for (nodeInHolder in holder) {
                 if (node == nodeInHolder) {
                     if(!nodeInHolder.channels.contains(channel)) {
                         nodeInHolder.channels.add(channel)
@@ -24,20 +24,23 @@ class NodeHashSet {
                     break
                 }
             }
+
             if (!nodeAlreadyExists) {
-                nodeHolder.add(node.apply { channels.add(channel) })
+                holder.add(node.apply { channels.add(channel) })
             }
         }
     }
 
-    fun find(node: Node): Node? {
-        val nodeHolder = hashMap[getHashMapIndex(node)] ?: return null
+    fun findByNodeId(nodeId: String?): Node? {
+        nodeId ?: return null
+        val nodeHolder = hashMap[calcHashMapIndex(Node(nodeId))] ?: return null
 
         for (nodeInHolder in nodeHolder) {
-            if (nodeInHolder == node) {
+            if (nodeInHolder.id == nodeId) {
                 return nodeInHolder
             }
         }
+
         return null
     }
 
