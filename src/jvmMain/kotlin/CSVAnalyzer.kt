@@ -4,12 +4,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.FrameWindowScope
+import androidx.compose.ui.window.MenuBar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -87,6 +93,7 @@ fun <T> CSVAnalyzerWindow(
 ) {
     var progress by remember { mutableStateOf(0f) }
     var readingLine by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
     DropFileWindow(
         onCloseRequest = { exitProcess(0) },
         title = windowTitle,
@@ -116,6 +123,27 @@ fun <T> CSVAnalyzerWindow(
             }
         },
         content = {
+            MenuBar {
+                Menu("edit") {
+                    Item(
+                        "Copy",
+                        onClick = {
+                            // copy to clipboard
+                            val text = clipboardText(selectedItem.value ?: return@Item) ?: return@Item
+                            Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
+                            println(text)
+                        },
+                        shortcut = KeyShortcut(Key.C, meta = true)
+                    )
+                    Item(
+                        "Find",
+                        onClick = {
+                            focusRequester.requestFocus()
+                        },
+                        shortcut = KeyShortcut(Key.F, meta = true)
+                    )
+                }
+            }
 
             when (analyzer.state.value) {
                 AnalyzerWindowState.Initialized -> {
@@ -148,10 +176,23 @@ fun <T> CSVAnalyzerWindow(
                                 Column {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         TextField(
+                                            modifier = Modifier
+                                                .onKeyEvent {
+                                                    if (it.type == KeyEventType.KeyDown && it.key.keyCode == Key.Enter.keyCode) {
+                                                        result = findById(searchText)
+                                                        if (result != null) {
+                                                            selectedItem.value = result
+                                                        }
+                                                    }
+                                                    false
+                                                }
+                                                .focusRequester(focusRequester),
                                             value = searchText,
                                             onValueChange = {
                                                 searchText = it
-                                            }
+                                            },
+                                            singleLine = true,
+                                            isError = (searchText != "" && findById(searchText) == null),
                                         )
                                         IconButton(
                                             onClick = {
