@@ -13,6 +13,10 @@ import edu.uci.ics.jung.visualization.VisualizationViewer
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse
 import java.awt.Dimension
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
 
 
 class Topology {
@@ -61,12 +65,19 @@ fun TopologyWindow(topology: Topology) {
                 }
 
                 viewer.setNodeToolTipFunction {
-//                    selectedNode = it
+                    if (it != null) {
+                        Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(it.id), null)
+                    }
                     it?.toString()
                 }
 
                 viewer.setEdgeToolTipFunction {
-//                    selectedChannel = it
+                    if (it != null) {
+                        Toolkit.getDefaultToolkit().systemClipboard.setContents(
+                            StringSelection(it.shortChannelId),
+                            null
+                        )
+                    }
                     it?.toString()
                 }
 
