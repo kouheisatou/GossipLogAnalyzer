@@ -54,6 +54,6 @@ class ChannelHashSet {
             }
             println("${channels.index}\t${channels.value?.size ?: 0}\t$channelIds")
         }
-        return result
+        return result.sortedByDescending { it.channelUpdates.size }
     }
 }

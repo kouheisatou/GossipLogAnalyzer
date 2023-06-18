@@ -9,10 +9,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.nativeKeyCode
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -28,9 +29,6 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
-import java.awt.event.KeyListener
 import java.io.File
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -50,6 +48,7 @@ fun main() = application {
             if (analyzer.value!!.analyzed.value) {
 
                 var selectedChannel by remember { mutableStateOf<Channel?>(null) }
+
                 Column {
                     Row {
                         Text("ChannelID")
@@ -60,10 +59,19 @@ fun main() = application {
                     Row {
                         val listState = rememberLazyListState()
                         LazyColumn(modifier = Modifier.weight(1f), state = listState) {
-                            items(analyzer.value?.channels?.sortedByDescending { it.channelUpdates.size } ?: listOf()) {
-                                Row(modifier = Modifier.clickable {
-                                    selectedChannel = it
-                                }) {
+                            items(analyzer.value?.channels ?: listOf()) {
+                                Row(
+                                    modifier = Modifier
+                                        .clickable {
+                                            selectedChannel = it
+                                        }.background(
+                                            if (it.shortChannelId == selectedChannel?.shortChannelId) {
+                                                Color.LightGray
+                                            } else {
+                                                Color.White
+                                            }
+                                        )
+                                ) {
                                     Text(it.shortChannelId)
                                     Spacer(modifier = Modifier.weight(1f))
                                     Text(it.channelUpdates.size.toString())
@@ -80,42 +88,78 @@ fun main() = application {
 
                     Window(
                         onCloseRequest = { selectedChannel = null },
-                        title = selectedChannel!!.shortChannelId,
+                        title = selectedChannel?.shortChannelId.toString(),
                         onKeyEvent = {
-                            if (it.key.keyCode == Key.Escape.keyCode) {
-                                selectedChannel = null
+                            if (it.type == KeyEventType.KeyDown) {
+                                when (it.key.keyCode) {
+                                    Key.Escape.keyCode -> {
+                                        selectedChannel = null
+                                    }
+
+                                    Key.DirectionDown.keyCode -> {
+                                        val index = analyzer.value?.channels?.indexOf(selectedChannel)?.plus(1)
+                                        if (index != null && analyzer.value?.channels != null) {
+                                            if (index in 0 until analyzer.value!!.channels!!.size) {
+                                                selectedChannel = analyzer.value!!.channels!![index]
+                                            }
+                                        }
+                                    }
+
+                                    Key.DirectionUp.keyCode -> {
+                                        val index = analyzer.value?.channels?.indexOf(selectedChannel)?.minus(1)
+                                        if (index != null && analyzer.value?.channels != null) {
+                                            if (index in 0 until analyzer.value!!.channels!!.size) {
+                                                selectedChannel = analyzer.value!!.channels!![index]
+                                            }
+                                        }
+                                    }
+                                }
                             }
                             false
                         }
                     ) {
 
-                        SwingPanel(
-                            factory = {
-                                val data = XYSeriesCollection()
-                                val htlcMaximumMsatSeries = XYSeries("htlcMaximumMsat", true)
-                                selectedChannel!!.channelUpdates.forEach {
-                                    val timeInt = LocalDateTime.parse(
-                                        it.timestamp,
-                                        DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
-                                    ).toEpochSecond(ZoneOffset.UTC)
+                        Column {
 
-                                    htlcMaximumMsatSeries.add(XYDataItem(timeInt, it.htlcMaximumMsat))
-                                }
-                                data.addSeries(htlcMaximumMsatSeries)
+                            val data = XYSeriesCollection()
+                            val htlcMaximumMsatSeries = XYSeries("htlcMaximumMsat", true)
+                            selectedChannel?.channelUpdates?.forEach {
+                                val timeInt = LocalDateTime.parse(
+                                    it.timestamp,
+                                    DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
+                                ).toEpochSecond(ZoneOffset.UTC)
 
-                                val chart = ChartFactory.createScatterPlot(
-                                    selectedChannel!!.shortChannelId,
-                                    "timestamp[ms]",
-                                    "htlcMaximumMsat[BTC]",
-                                    data,
-                                )
-
-                                (chart.plot as XYPlot).renderer = XYLineAndShapeRenderer()
-                                    .apply { setSeriesLinesVisible(0, true) }
-
-                                ChartPanel(chart)
+                                htlcMaximumMsatSeries.add(XYDataItem(timeInt, it.htlcMaximumMsat))
                             }
-                        )
+                            data.addSeries(htlcMaximumMsatSeries)
+                            val chart = ChartFactory.createScatterPlot(
+                                null,
+                                "timestamp[ms]",
+                                "htlcMaximumMsat[BTC]",
+                                data,
+                            )
+                            (chart.plot as XYPlot).renderer =
+                                XYLineAndShapeRenderer().apply { setSeriesLinesVisible(0, true) }
+                            val chartPane = ChartPanel(chart)
+
+                            SwingPanel(
+                                modifier = Modifier.fillMaxWidth().weight(1f),
+                                factory = {
+                                    chartPane
+                                },
+                                update = {
+                                    chartPane.chart = chart
+                                }
+                            )
+
+                            Divider(modifier = Modifier.fillMaxWidth())
+
+                            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                                items(selectedChannel?.channelUpdates ?: listOf()) {
+                                    Text(it.toString())
+                                }
+                            }
+                        }
                     }
                 }
             } else {
