@@ -17,7 +17,9 @@ class NodeHashSet {
             var nodeAlreadyExists = false
             for (nodeInHolder in nodeHolder) {
                 if (node == nodeInHolder) {
-                    nodeInHolder.channels.add(channel)
+                    if(!nodeInHolder.channels.contains(channel)) {
+                        nodeInHolder.channels.add(channel)
+                    }
                     nodeAlreadyExists = true
                     break
                 }
@@ -28,7 +30,7 @@ class NodeHashSet {
         }
     }
 
-    fun get(node: Node): Node? {
+    fun find(node: Node): Node? {
         val nodeHolder = hashMap[getHashMapIndex(node)] ?: return null
 
         for (nodeInHolder in nodeHolder) {
@@ -41,14 +43,14 @@ class NodeHashSet {
 
     fun toList(): List<Node> {
         val result = mutableListOf<Node>()
-        println("index\tused\tchannelIds")
+//        println("index\tused\tchannelIds")
         for (nodes in hashMap.withIndex()) {
             var nodeIdsText = ""
             for (node in nodes.value ?: listOf()) {
                 result.add(node)
                 nodeIdsText += "${node.id},"
             }
-            println("${nodes.index}\t${nodes.value?.size ?: 0}\t$nodeIdsText")
+//            println("${nodes.index}\t${nodes.value?.size ?: 0}\t$nodeIdsText")
         }
         return result.sortedByDescending { it.channels.size }
     }

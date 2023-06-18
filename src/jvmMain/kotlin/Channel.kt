@@ -92,7 +92,11 @@ fun ChannelDetailComponent(channel: Channel) {
                 listItemLayout = {
                     Text(it?.id.toString())
                 },
+                onItemSelected = {
+                    println(it)
+                }
             )
+
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
                 items(channel.channelUpdates) {
                     Text(it.toString())

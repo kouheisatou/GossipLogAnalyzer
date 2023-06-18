@@ -1,36 +1,11 @@
-import androidx.compose.foundation.VerticalScrollbar
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.material.Divider
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
-import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import org.jfree.chart.ChartFactory
-import org.jfree.chart.ChartPanel
-import org.jfree.chart.plot.XYPlot
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer
-import org.jfree.data.xy.XYDataItem
-import org.jfree.data.xy.XYSeries
-import org.jfree.data.xy.XYSeriesCollection
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 
 val gossipAnalyzer = GossipLogAnalyzer()
@@ -39,8 +14,11 @@ val topologyAnalyzer = TopologyAnalyzer()
 val channels = ChannelHashSet()
 val nodes = NodeHashSet()
 
+@OptIn(ExperimentalMaterialApi::class)
 fun main() = application {
     if (gossipAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
+
+        val selectedNode = mutableStateOf<Node?>(null)
         CSVAnalyzerWindow(
             "NodeList",
             topologyAnalyzer,
@@ -53,18 +31,68 @@ fun main() = application {
                 }
             },
             listTopRowLayout = {
-                Text("NodeID")
-                Spacer(modifier = Modifier.weight(1f))
-                Text("Channels")
+                Column {
+
+                    var nodeId by remember { mutableStateOf("") }
+                    var showDialog by remember { mutableStateOf(false) }
+                    var result by remember { mutableStateOf<Node?>(null) }
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            TextField(
+                                value = nodeId,
+                                onValueChange = {
+                                    nodeId = it
+                                }
+                            )
+                            IconButton(
+                                onClick = {
+                                    result = nodes.find(Node(nodeId))
+                                    showDialog = true
+                                }
+                            ) {
+                                Text("🔍")
+                            }
+                        }
+                    }
+                    if (showDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showDialog = false },
+                            buttons = {
+                                Row {
+                                    TextButton(onClick = { showDialog = false }) { Text("close") }
+                                    if (result != null) {
+                                        TextButton(onClick = {
+                                            selectedNode.value = result
+                                            showDialog = false
+                                        }) {
+                                            Text("open detail")
+                                        }
+                                    }
+                                }
+                            },
+                            text = { Text(result?.id.toString()) }
+                        )
+                    }
+
+                    Row {
+                        Text("NodeID")
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text("Channels")
+                    }
+                }
             },
             listItemLayout = {
                 Text(it.id)
                 Spacer(modifier = Modifier.weight(1f))
                 Text(it.channels.size.toString())
+            },
+            onItemSelected = {
+                println(it)
             }
         )
     }
 
+    val selectedChannel = mutableStateOf<Channel?>(null)
     CSVAnalyzerWindow(
         "GossipLogAnalyzer",
         gossipAnalyzer,
@@ -72,19 +100,69 @@ fun main() = application {
         listData = gossipAnalyzer.channelsForDisplay.value ?: listOf(),
         detailWindowTitle = { "Channel ${it?.shortChannelId}" },
         detailWindowLayout = { selected ->
-            if(selected != null) {
+            if (selected != null) {
                 ChannelDetailComponent(selected)
             }
         },
+        selectedItem = selectedChannel,
         listTopRowLayout = {
-            Text("ChannelID")
-            Spacer(modifier = Modifier.weight(1f))
-            Text("Updates")
+            Column {
+
+                var channelId by remember { mutableStateOf("") }
+                var showDialog by remember { mutableStateOf(false) }
+                var result by remember { mutableStateOf<Channel?>(null) }
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextField(
+                            value = channelId,
+                            onValueChange = {
+                                channelId = it
+                            }
+                        )
+                        IconButton(
+                            onClick = {
+                                result = channels.findChannelById(channelId)
+                                showDialog = true
+                            }
+                        ) {
+                            Text("🔍")
+                        }
+                    }
+                }
+                if (showDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDialog = false },
+                        buttons = {
+                            Row {
+                                TextButton(onClick = { showDialog = false }) { Text("close") }
+                                if (result != null) {
+                                    TextButton(onClick = {
+                                        selectedChannel.value = result
+                                        showDialog = false
+                                    }) {
+                                        Text("open detail")
+                                    }
+                                }
+                            }
+                        },
+                        text = { Text(result?.shortChannelId.toString()) }
+                    )
+                }
+
+                Row {
+                    Text("ChannelID")
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text("Updates")
+                }
+            }
         },
         listItemLayout = {
             Text(it.shortChannelId)
             Spacer(modifier = Modifier.weight(1f))
             Text(it.channelUpdates.size.toString())
+        },
+        onItemSelected = {
+            println(it)
         }
     )
 }

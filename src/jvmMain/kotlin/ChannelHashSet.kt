@@ -30,7 +30,7 @@ class ChannelHashSet {
         }
     }
 
-    fun get(channelId: String): Channel? {
+    fun findChannelById(channelId: String): Channel? {
         val channelHolder = hashMap[getHashMapIndex(channelId)] ?: return null
 
         for (channel in channelHolder) {
@@ -38,23 +38,24 @@ class ChannelHashSet {
                 return channel
             }
         }
+
         return null
     }
 
     fun toList(): List<Channel> {
         val result = mutableListOf<Channel>()
-        println("index\tused\tchannelIds")
+//        println("index\tused\tchannelIds")
         var channelUpdateCount = 0
         for (channels in hashMap.withIndex()) {
             var channelIds = ""
             for (channel in channels.value ?: listOf()) {
                 result.add(channel)
-                channelIds += "${channel.shortChannelId}(${channel.channelUpdates.size}),"
+                channelIds += "${channel.shortChannelId},"
                 channelUpdateCount+=channel.channelUpdates.size
             }
-            println("${channels.index}\t${channels.value?.size ?: 0}\t$channelIds")
+//            println("${channels.index}\t${channels.value?.size ?: 0}\t$channelIds")
         }
-        println("count of channel_update : $channelUpdateCount")
+//        println("count of channel_update : $channelUpdateCount")
         return result.sortedByDescending { it.channelUpdates.size }
     }
 }

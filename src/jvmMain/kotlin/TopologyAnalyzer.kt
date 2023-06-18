@@ -1,7 +1,6 @@
 import androidx.compose.runtime.*
 import gossip_msg.ChannelAnnouncement
 import java.io.File
-import kotlin.system.exitProcess
 
 class TopologyAnalyzer : CSVAnalyzer() {
 
@@ -27,7 +26,7 @@ class TopologyAnalyzer : CSVAnalyzer() {
         val node1 = Node(channelAnnouncement.nodeId1)
         val node2 = Node(channelAnnouncement.nodeId2)
 
-        val channel = channels.get(channelAnnouncement.shortChannelId)?.apply {
+        val channel = channels.findChannelById(channelAnnouncement.shortChannelId)?.apply {
             this.node1 = node1
             this.node2 = node2
         } ?: return

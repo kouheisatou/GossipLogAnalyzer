@@ -95,7 +95,7 @@ abstract class CSVAnalyzer {
 }
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 fun <T> CSVAnalyzerWindow(
     windowTitle: String,
     analyzer: CSVAnalyzer,
@@ -103,8 +103,10 @@ fun <T> CSVAnalyzerWindow(
     listData: List<T>,
     detailWindowTitle: (selectedItem: T?) -> String,
     detailWindowLayout: @Composable FrameWindowScope.(selectedItem: T?) -> Unit,
-    listTopRowLayout: @Composable RowScope.() -> Unit,
+    listTopRowLayout: @Composable () -> Unit,
     listItemLayout: @Composable RowScope.(listItem: T) -> Unit,
+    selectedItem: MutableState<T?> = mutableStateOf(null),
+    onItemSelected: ((selectedItem: T) -> Unit)? = null
 ) {
     var progress by remember { mutableStateOf(0f) }
     var readingLine by remember { mutableStateOf("") }
@@ -161,6 +163,8 @@ fun <T> CSVAnalyzerWindow(
                     detailWindowLayout,
                     listItemLayout,
                     listTopRowLayout = listTopRowLayout,
+                    externalControlledSelectedItem = selectedItem,
+                    onItemSelected = onItemSelected,
                 )
             }
         }

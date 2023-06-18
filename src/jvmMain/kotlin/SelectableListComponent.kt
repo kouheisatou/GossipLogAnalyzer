@@ -26,21 +26,20 @@ fun <T> SelectableListComponent(
     detailWindowTitle: (selectedItem: T?) -> String,
     detailWindowLayout: @Composable FrameWindowScope.(selectedItem: T?) -> Unit,
     listItemLayout: @Composable RowScope.(listItem: T) -> Unit,
-    listTopRowLayout: (@Composable RowScope.() -> Unit)? = null,
+    listTopRowLayout: (@Composable () -> Unit)? = null,
     listTitle: String? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    externalControlledSelectedItem: MutableState<T?>? = null,
+    onItemSelected: ((selectedItem: T) -> Unit)? = null
 ) {
-
-    var selected by remember { mutableStateOf<T?>(null) }
+    val selectedItem = externalControlledSelectedItem ?: mutableStateOf<T?>(null)
 
     Column(modifier = modifier) {
         if (listTitle != null) {
             Text(listTitle)
         }
         if (listTopRowLayout != null) {
-            Row {
-                listTopRowLayout()
-            }
+            listTopRowLayout()
         }
         Divider(modifier = Modifier.fillMaxWidth())
         Row {
@@ -51,10 +50,13 @@ fun <T> SelectableListComponent(
                         Row(
                             modifier = Modifier
                                 .clickable {
-                                    selected = it
+                                    selectedItem.value = it
+                                    if (onItemSelected != null) {
+                                        onItemSelected(it)
+                                    }
                                 }
                                 .background(
-                                    if (selected == it) {
+                                    if (selectedItem.value == it) {
                                         Color.LightGray
                                     } else {
                                         Color.White
@@ -74,29 +76,35 @@ fun <T> SelectableListComponent(
             )
         }
     }
-    if (selected != null) {
+    if (selectedItem.value != null) {
 
         Window(
-            onCloseRequest = { selected = null },
-            title = detailWindowTitle(selected),
+            onCloseRequest = { selectedItem.value = null },
+            title = detailWindowTitle(selectedItem.value),
             onKeyEvent = {
                 if (it.type == KeyEventType.KeyDown) {
                     when (it.key.keyCode) {
                         Key.Escape.keyCode -> {
-                            selected = null
+                            selectedItem.value = null
                         }
 
                         Key.DirectionDown.keyCode -> {
-                            val index = listData.indexOf(selected) + 1
+                            val index = listData.indexOf(selectedItem.value) + 1
                             if (index in listData.indices) {
-                                selected = listData[index]
+                                selectedItem.value = listData[index]
+                                if (onItemSelected != null) {
+                                    onItemSelected(selectedItem.value!!)
+                                }
                             }
                         }
 
                         Key.DirectionUp.keyCode -> {
-                            val index = listData.indexOf(selected) - 1
+                            val index = listData.indexOf(selectedItem.value) - 1
                             if (index in listData.indices) {
-                                selected = listData[index]
+                                selectedItem.value = listData[index]
+                                if (onItemSelected != null) {
+                                    onItemSelected(selectedItem.value!!)
+                                }
                             }
                         }
                     }
@@ -104,7 +112,7 @@ fun <T> SelectableListComponent(
                 false
             }
         ) {
-            detailWindowLayout(selected)
+            detailWindowLayout(selectedItem.value)
         }
     }
 }

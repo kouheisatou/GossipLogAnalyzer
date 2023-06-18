@@ -26,7 +26,7 @@ class GossipLogAnalyzer : CSVAnalyzer() {
     }
 
     fun getChannel(channel: Channel): Channel? {
-        return channels.get(channel.shortChannelId)
+        return channels.findChannelById(channel.shortChannelId)
     }
 
     override fun onAnalyzingFinished() {
