@@ -41,7 +41,7 @@ class NodeAnalyzer : CSVAnalyzer() {
     }
 
     override fun onLogFileLoaded(logFile: File): String? {
-        return if (gossipAnalyzer.state.value != AnalyzerWindowState.Analyzed) {
+        return if (channelAnalyzer.state.value != AnalyzerWindowState.Analyzed) {
             "Analyze channel_update log first."
         } else {
             null

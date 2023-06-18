@@ -12,6 +12,7 @@ repositories {
     google()
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    maven("https://jitpack.io")
 }
 
 kotlin {
@@ -25,6 +26,7 @@ kotlin {
                 implementation(compose.desktop.currentOs)
                 implementation("org.jetbrains.compose.ui:ui-tooling-preview-desktop:1.4.0")
                 implementation("org.jfree:jfreechart:1.5.4")
+                implementation("com.github.jrtom:jung:master-SNAPSHOT")
             }
         }
         val jvmTest by getting

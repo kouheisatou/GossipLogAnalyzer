@@ -4,7 +4,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.application
 
 
-val gossipAnalyzer = ChannelAnalyzer()
+val channelAnalyzer = ChannelAnalyzer()
 val nodeAnalyzer = NodeAnalyzer()
 
 val channels = ChannelHashSet()
@@ -12,7 +12,11 @@ val nodes = NodeHashSet()
 
 @OptIn(ExperimentalMaterialApi::class)
 fun main() = application {
-    if (gossipAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
+    if(channelAnalyzer.state.value == AnalyzerWindowState.Analyzed && nodeAnalyzer.state.value == AnalyzerWindowState.Analyzed){
+        TopologyWindow(Topology())
+    }
+
+    if (channelAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
 
         CSVAnalyzerWindow(
             "NodeList",
@@ -54,16 +58,16 @@ fun main() = application {
 
     CSVAnalyzerWindow(
         "GossipLogAnalyzer",
-        gossipAnalyzer,
+        channelAnalyzer,
         "Drop channel_update log file here!",
-        listData = gossipAnalyzer.channelsForDisplay.value ?: listOf(),
+        listData = channelAnalyzer.channelsForDisplay.value ?: listOf(),
         detailWindowTitle = { "Channel ${it?.shortChannelId}" },
         detailWindowLayout = { selected ->
             if (selected != null) {
                 ChannelDetailComponent(selected)
             }
         },
-        selectedItem = gossipAnalyzer.selectedChannel,
+        selectedItem = channelAnalyzer.selectedChannel,
         listTopRowLayout = {
             Row {
                 Text("ChannelID")
