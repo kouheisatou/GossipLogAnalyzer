@@ -1,7 +1,7 @@
 import androidx.compose.runtime.mutableStateOf
 import gossip_msg.ChannelUpdate
 
-class GossipLogAnalyzer : CSVAnalyzer() {
+class ChannelAnalyzer : CSVAnalyzer() {
 
     // for displaying channel list on compose window
     var channelsForDisplay = mutableStateOf<List<Channel>?>(null)

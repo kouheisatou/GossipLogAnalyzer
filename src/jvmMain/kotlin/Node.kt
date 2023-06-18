@@ -47,6 +47,9 @@ fun NodeDetailComponent(node: Node) {
         listTitle = "Channels",
         fetchLatestDetail = {
             channels.findChannelById(it.shortChannelId)
+        },
+        clipboardText = {
+            node.id
         }
     )
 }

@@ -2,7 +2,7 @@ import androidx.compose.runtime.*
 import gossip_msg.ChannelAnnouncement
 import java.io.File
 
-class TopologyAnalyzer : CSVAnalyzer() {
+class NodeAnalyzer : CSVAnalyzer() {
 
     var nodeListForDisplay = mutableStateOf<List<Node>?>(null)
     val selectedNode = mutableStateOf<Node?>(null)

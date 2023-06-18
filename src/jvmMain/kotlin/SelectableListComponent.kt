@@ -12,12 +12,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.window.FrameWindowScope
+import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -27,6 +27,7 @@ fun <T> SelectableListComponent(
     detailWindowLayout: @Composable FrameWindowScope.(selectedItem: T?) -> Unit,
     listItemLayout: @Composable (listItem: T) -> Unit,
     fetchLatestDetail: (selectedItem: T) -> T?,
+    clipboardText: (selectedItem: T) -> String?,
     listTopRowLayout: (@Composable () -> Unit)? = null,
     listTitle: String? = null,
     modifier: Modifier = Modifier,
@@ -123,6 +124,23 @@ fun <T> SelectableListComponent(
                 false
             }
         ) {
+
+
+            MenuBar {
+                Menu("edit") {
+                    Item(
+                        "Copy",
+                        onClick = {
+                            // copy to clipboard
+                            val text = clipboardText(getSelected() ?: return@Item) ?: return@Item
+                            Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
+                            println(text)
+                        },
+                        shortcut = KeyShortcut(Key.C, meta = true)
+                    )
+                }
+            }
+
             detailWindowLayout(getSelected())
         }
     }

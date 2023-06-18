@@ -4,8 +4,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.application
 
 
-val gossipAnalyzer = GossipLogAnalyzer()
-val topologyAnalyzer = TopologyAnalyzer()
+val gossipAnalyzer = ChannelAnalyzer()
+val nodeAnalyzer = NodeAnalyzer()
 
 val channels = ChannelHashSet()
 val nodes = NodeHashSet()
@@ -16,9 +16,9 @@ fun main() = application {
 
         CSVAnalyzerWindow(
             "NodeList",
-            topologyAnalyzer,
+            nodeAnalyzer,
             "Drop channel_announcement log file here!",
-            topologyAnalyzer.nodeListForDisplay.value ?: listOf(),
+            nodeAnalyzer.nodeListForDisplay.value ?: listOf(),
             detailWindowTitle = { "Node ${it?.id}" },
             detailWindowLayout = {
                 if (it != null) {
@@ -42,10 +42,13 @@ fun main() = application {
             fetchLatestDetail = {
                 nodes.findByNodeId(it.id)
             },
-            selectedItem = topologyAnalyzer.selectedNode,
+            selectedItem = nodeAnalyzer.selectedNode,
             findById = {
                 nodes.findByNodeId(it)
             },
+            clipboardText = {
+                it?.id
+            }
         )
     }
 
@@ -81,5 +84,8 @@ fun main() = application {
         findById = {
             channels.findChannelById(it)
         },
+        clipboardText = {
+            it?.shortChannelId
+        }
     )
 }

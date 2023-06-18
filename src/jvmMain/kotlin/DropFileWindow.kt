@@ -1,4 +1,5 @@
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.window.FrameWindowScope
 import androidx.compose.ui.window.Window
 import java.awt.datatransfer.DataFlavor
@@ -13,8 +14,9 @@ fun DropFileWindow(
     title: String,
     onDroppedFile: (file: File) -> Unit,
     content: @Composable FrameWindowScope.() -> Unit,
+    onKeyEvent: (keyEvent: KeyEvent) -> Boolean = { false },
 ) {
-    Window(onCloseRequest, title = title) {
+    Window(onCloseRequest, title = title, onKeyEvent = onKeyEvent) {
         val target = object : DropTarget() {
             @Synchronized
             override fun drop(evt: DropTargetDropEvent) {

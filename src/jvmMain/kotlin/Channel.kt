@@ -93,6 +93,9 @@ fun ChannelDetailComponent(channel: Channel) {
                 },
                 fetchLatestDetail = {
                     nodes.findByNodeId(it?.id)
+                },
+                clipboardText = {
+                    channel.shortChannelId
                 }
             )
 

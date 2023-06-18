@@ -2,6 +2,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -69,7 +70,7 @@ abstract class CSVAnalyzer {
 }
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
 fun <T> CSVAnalyzerWindow(
     windowTitle: String,
     analyzer: CSVAnalyzer,
@@ -82,6 +83,7 @@ fun <T> CSVAnalyzerWindow(
     findById: (searchText: String) -> T?,
     selectedItem: MutableState<T?> = mutableStateOf(null),
     fetchLatestDetail: (selectedItem: T) -> T?,
+    clipboardText: (selectedItem: T?) -> String?,
 ) {
     var progress by remember { mutableStateOf(0f) }
     var readingLine by remember { mutableStateOf("") }
@@ -113,82 +115,85 @@ fun <T> CSVAnalyzerWindow(
                 analyzer.errorMsg.value = e.message
             }
         },
-    ) {
-        when (analyzer.state.value) {
-            AnalyzerWindowState.Initialized -> {
-                Text(dropFileMsg, modifier = Modifier.fillMaxSize(), textAlign = TextAlign.Center)
-            }
+        content = {
 
-            AnalyzerWindowState.Analyzing -> {
+            when (analyzer.state.value) {
+                AnalyzerWindowState.Initialized -> {
+                    Text(dropFileMsg, modifier = Modifier.fillMaxSize(), textAlign = TextAlign.Center)
+                }
 
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth().padding(20.dp))
-                    Text(readingLine)
+                AnalyzerWindowState.Analyzing -> {
+
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth().padding(20.dp))
+                        Text(readingLine)
+                    }
+                }
+
+                AnalyzerWindowState.Analyzed -> {
+                    SelectableListComponent(
+                        listData,
+                        detailWindowTitle,
+                        detailWindowLayout,
+                        listItemLayout,
+                        listTopRowLayout = {
+                            Column {
+
+                                var searchText by remember { mutableStateOf("") }
+                                var result by remember { mutableStateOf<T?>(null) }
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        TextField(
+                                            value = searchText,
+                                            onValueChange = {
+                                                searchText = it
+                                            }
+                                        )
+                                        IconButton(
+                                            onClick = {
+                                                result = findById(searchText)
+                                                if (result != null) {
+                                                    selectedItem.value = result
+                                                }
+                                            }
+                                        ) {
+                                            Text("🔍")
+                                        }
+                                    }
+                                }
+
+                                listTopRowLayout()
+                            }
+                        },
+                        externalControlledSelectedItem = selectedItem,
+                        fetchLatestDetail = fetchLatestDetail,
+                        clipboardText = clipboardText,
+                    )
                 }
             }
 
-            AnalyzerWindowState.Analyzed -> {
-                SelectableListComponent(
-                    listData,
-                    detailWindowTitle,
-                    detailWindowLayout,
-                    listItemLayout,
-                    listTopRowLayout = {
-                        Column {
-
-                            var searchText by remember { mutableStateOf("") }
-                            var result by remember { mutableStateOf<T?>(null) }
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    TextField(
-                                        value = searchText,
-                                        onValueChange = {
-                                            searchText = it
-                                        }
-                                    )
-                                    IconButton(
-                                        onClick = {
-                                            result = findById(searchText)
-                                            if(result != null) {
-                                                selectedItem.value = result
-                                            }
-                                        }
-                                    ) {
-                                        Text("🔍")
-                                    }
-                                }
+            if (analyzer.errorMsg.value != null) {
+                AlertDialog(
+                    onDismissRequest = {
+                        analyzer.errorMsg.value = null
+                    },
+                    buttons = {
+                        TextButton(
+                            onClick = {
+                                analyzer.errorMsg.value = null
                             }
-
-                            listTopRowLayout()
+                        ) {
+                            Text("OK")
                         }
                     },
-                    externalControlledSelectedItem = selectedItem,
-                    fetchLatestDetail = fetchLatestDetail,
+                    title = { Text("error") },
+                    text = { Text(analyzer.errorMsg.value ?: "") }
                 )
             }
         }
-
-        if (analyzer.errorMsg.value != null) {
-            AlertDialog(
-                onDismissRequest = {
-                    analyzer.errorMsg.value = null
-                },
-                buttons = {
-                    TextButton(
-                        onClick = {
-                            analyzer.errorMsg.value = null
-                        }
-                    ) {
-                        Text("OK")
-                    }
-                },
-                title = { Text("error") },
-                text = { Text(analyzer.errorMsg.value ?: "") }
-            )
-        }
-    }
+    )
 }
