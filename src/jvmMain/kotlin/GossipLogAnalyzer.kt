@@ -1,9 +1,10 @@
+import androidx.compose.runtime.mutableStateOf
 import gossip_msg.ChannelUpdate
 
 class GossipLogAnalyzer : CSVAnalyzer() {
 
     // for displaying channel list on compose window
-    var channelsForDisplay: List<Channel>? = null
+    var channelsForDisplay = mutableStateOf<List<Channel>?>(null)
 
     override fun analyzeCSVLine(lineText: String?) {
         if (lineText == null) return
@@ -29,6 +30,6 @@ class GossipLogAnalyzer : CSVAnalyzer() {
     }
 
     override fun onAnalyzingFinished() {
-        channelsForDisplay = channels.toList()
+        channelsForDisplay.value = channels.toList()
     }
 }

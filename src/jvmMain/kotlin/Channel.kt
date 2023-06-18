@@ -16,7 +16,7 @@ class Channel(
     }
 
     override fun toString(): String {
-        return "Channel(shortChannelId='$shortChannelId', channelUpdates=$channelUpdates)"
+        return "Channel(shortChannelId='$shortChannelId', node1=${node1?.id}, node2=${node2?.id}, channelUpdates=$channelUpdates)"
     }
 
 }

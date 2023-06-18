@@ -3,6 +3,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.material.*
@@ -19,6 +20,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.FrameWindowScope
 import androidx.compose.ui.window.Window
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,6 +41,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import kotlin.system.exitProcess
+
 enum class AnalyzerWindowState {
     Initialized, Analyzing, Analyzed
 }
@@ -86,23 +89,28 @@ abstract class CSVAnalyzer {
     abstract fun analyzeCSVLine(lineText: String?)
     abstract fun onAnalyzingFinished()
 
-    open fun onLogFileLoaded(logFile: File): String?{
+    open fun onLogFileLoaded(logFile: File): String? {
         return null
     }
 }
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class)
-fun CSVAnalyzerWindow(
+@OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
+fun <T> CSVAnalyzerWindow(
+    windowTitle: String,
     analyzer: CSVAnalyzer,
     dropFileMsg: String,
-    content: @Composable @UiComposable () -> Unit,
+    listData: List<T>,
+    detailWindowTitle: (selectedItem: T?) -> String,
+    detailWindowLayout: @Composable FrameWindowScope.(selectedItem: T?) -> Unit,
+    listTopRowLayout: @Composable RowScope.() -> Unit,
+    listItemLayout: @Composable RowScope.(listItem: T) -> Unit,
 ) {
     var progress by remember { mutableStateOf(0f) }
     var readingLine by remember { mutableStateOf("") }
     DropFileWindow(
         onCloseRequest = { exitProcess(0) },
-        title = "GossipLogAnalyzer",
+        title = windowTitle,
         onDroppedFile = {
 
             if (!it.path.endsWith(".csv")) {
@@ -111,7 +119,7 @@ fun CSVAnalyzerWindow(
             }
 
             val errorMsg = analyzer.onLogFileLoaded(it)
-            if(errorMsg != null){
+            if (errorMsg != null) {
                 analyzer.errorMsg.value = errorMsg
                 return@DropFileWindow
             }
@@ -147,7 +155,75 @@ fun CSVAnalyzerWindow(
             }
 
             AnalyzerWindowState.Analyzed -> {
-                content()
+
+
+                var selected by remember { mutableStateOf<T?>(null) }
+
+                Column {
+                    Row {
+                        listTopRowLayout()
+                    }
+                    Divider(modifier = Modifier.fillMaxWidth())
+                    Row {
+                        val listState = rememberLazyListState()
+                        LazyColumn(modifier = Modifier.weight(1f), state = listState) {
+                            items(listData) {
+                                Row(
+                                    modifier = Modifier
+                                        .clickable {
+                                            selected = it
+                                        }
+                                        .background(
+                                            if (selected == it) {
+                                                Color.LightGray
+                                            } else {
+                                                Color.White
+                                            }
+                                        )
+                                ) {
+                                    listItemLayout(it)
+                                }
+                            }
+                        }
+                        VerticalScrollbar(
+                            modifier = Modifier.fillMaxHeight(),
+                            adapter = rememberScrollbarAdapter(listState),
+                        )
+                    }
+                }
+                if (selected != null) {
+
+                    Window(
+                        onCloseRequest = { selected = null },
+                        title = detailWindowTitle(selected),
+                        onKeyEvent = {
+                            if (it.type == KeyEventType.KeyDown) {
+                                when (it.key.keyCode) {
+                                    Key.Escape.keyCode -> {
+                                        selected = null
+                                    }
+
+                                    Key.DirectionDown.keyCode -> {
+                                        val index = listData.indexOf(selected) + 1
+                                        if (index in listData.indices) {
+                                            selected = listData[index]
+                                        }
+                                    }
+
+                                    Key.DirectionUp.keyCode -> {
+                                        val index = listData.indexOf(selected) - 1
+                                        if (index in listData.indices) {
+                                            selected = listData[index]
+                                        }
+                                    }
+                                }
+                            }
+                            false
+                        }
+                    ) {
+                        detailWindowLayout(selected)
+                    }
+                }
             }
         }
 

@@ -5,7 +5,7 @@ import kotlin.system.exitProcess
 
 class TopologyAnalyzer : CSVAnalyzer() {
 
-    var nodeListForDisplay: List<Node>? = null
+    var nodeListForDisplay = mutableStateOf<List<Node>?>(null)
 
     override fun analyzeCSVLine(lineText: String?) {
         if (lineText == null) return
@@ -37,7 +37,7 @@ class TopologyAnalyzer : CSVAnalyzer() {
     }
 
     override fun onAnalyzingFinished() {
-        nodeListForDisplay = nodes.toList()
+        nodeListForDisplay.value = nodes.toList()
     }
 
     override fun onLogFileLoaded(logFile: File): String? {

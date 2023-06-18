@@ -8,4 +8,8 @@ class Node(val id: String) {
     override fun hashCode(): Int {
         return id.hashCode()
     }
+
+    override fun toString(): String {
+        return "Node(id='$id', channels=$channels)"
+    }
 }

@@ -39,162 +39,97 @@ val topologyAnalyzer = TopologyAnalyzer()
 val channels = ChannelHashSet()
 val nodes = NodeHashSet()
 
-@OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
     if (gossipAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
         CSVAnalyzerWindow(
+            "NodeList",
             topologyAnalyzer,
             "Drop channel_announcement log file here!",
-        ) {
-
-            Column {
-                Row {
-                    Text("NodeID")
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text("Channels")
-                }
-                Divider(modifier = Modifier.fillMaxWidth())
-
-                Row {
-                    val listState = rememberLazyListState()
-                    LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
-                        items(topologyAnalyzer.nodeListForDisplay ?: listOf()) {
-                            Row {
-                                Text(it.id)
-                                Spacer(modifier = Modifier.weight(1f))
-                                Text(it.channels.size.toString())
-                            }
-                        }
+            topologyAnalyzer.nodeListForDisplay.value ?: listOf(),
+            detailWindowTitle = {
+                it?.id ?: ""
+            },
+            detailWindowLayout = {
+                LazyColumn {
+                    items(it?.channels ?: listOf()) {
+                        Text(it.toString())
+                        Divider()
                     }
-                    VerticalScrollbar(
-                        modifier = Modifier.fillMaxHeight(),
-                        adapter = rememberScrollbarAdapter(listState),
-                    )
-
                 }
+            },
+            listTopRowLayout = {
+                Text("NodeID")
+                Spacer(modifier = Modifier.weight(1f))
+                Text("Channels")
+            },
+            listItemLayout = {
+                Text(it.id)
+                Spacer(modifier = Modifier.weight(1f))
+                Text(it.channels.size.toString())
             }
-        }
+        )
     }
 
     CSVAnalyzerWindow(
+        "GossipLogAnalyzer",
         gossipAnalyzer,
         "Drop channel_update log file here!",
-    ) {
+        listData = gossipAnalyzer.channelsForDisplay.value ?: listOf(),
+        detailWindowTitle = { it?.shortChannelId.toString() },
+        detailWindowLayout = { selected ->
 
-        var selectedChannel by remember { mutableStateOf<Channel?>(null) }
+            Column {
 
-        Column {
-            Row {
-                Text("ChannelID")
-                Spacer(modifier = Modifier.weight(1f))
-                Text("Updates")
-            }
-            Divider(modifier = Modifier.fillMaxWidth())
-            Row {
-                val listState = rememberLazyListState()
-                LazyColumn(modifier = Modifier.weight(1f), state = listState) {
-                    items(gossipAnalyzer.channelsForDisplay ?: listOf()) {
-                        Row(
-                            modifier = Modifier
-                                .clickable {
-                                    selectedChannel = it
-                                }.background(
-                                    if (it.shortChannelId == selectedChannel?.shortChannelId) {
-                                        Color.LightGray
-                                    } else {
-                                        Color.White
-                                    }
-                                )
-                        ) {
-                            Text(it.shortChannelId)
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(it.channelUpdates.size.toString())
-                        }
-                    }
+                val data = XYSeriesCollection()
+                val htlcMaximumMsatSeries = XYSeries("htlcMaximumMsat", true)
+                selected?.channelUpdates?.forEach {
+                    val timeInt = LocalDateTime.parse(
+                        it.timestamp,
+                        DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
+                    ).toEpochSecond(ZoneOffset.UTC)
+
+                    htlcMaximumMsatSeries.add(XYDataItem(timeInt, it.htlcMaximumMsat))
                 }
-                VerticalScrollbar(
-                    modifier = Modifier.fillMaxHeight(),
-                    adapter = rememberScrollbarAdapter(listState),
+                data.addSeries(htlcMaximumMsatSeries)
+                val chart = ChartFactory.createScatterPlot(
+                    null,
+                    "timestamp[ms]",
+                    "htlcMaximumMsat[BTC]",
+                    data,
                 )
-            }
-        }
-        if (selectedChannel != null) {
+                (chart.plot as XYPlot).renderer =
+                    XYLineAndShapeRenderer().apply { setSeriesLinesVisible(0, true) }
+                val chartPane = ChartPanel(chart)
 
-            Window(
-                onCloseRequest = { selectedChannel = null },
-                title = selectedChannel?.shortChannelId.toString(),
-                onKeyEvent = {
-                    if (it.type == KeyEventType.KeyDown) {
-                        when (it.key.keyCode) {
-                            Key.Escape.keyCode -> {
-                                selectedChannel = null
-                            }
-
-                            Key.DirectionDown.keyCode -> {
-                                val index = gossipAnalyzer.channelsForDisplay?.indexOf(selectedChannel)?.plus(1)
-                                if (index != null && gossipAnalyzer.channelsForDisplay != null) {
-                                    if (index in 0 until gossipAnalyzer.channelsForDisplay!!.size) {
-                                        selectedChannel = gossipAnalyzer.channelsForDisplay!![index]
-                                    }
-                                }
-                            }
-
-                            Key.DirectionUp.keyCode -> {
-                                val index = gossipAnalyzer.channelsForDisplay?.indexOf(selectedChannel)?.minus(1)
-                                if (index != null && gossipAnalyzer.channelsForDisplay != null) {
-                                    if (index in 0 until gossipAnalyzer.channelsForDisplay!!.size) {
-                                        selectedChannel = gossipAnalyzer.channelsForDisplay!![index]
-                                    }
-                                }
-                            }
-                        }
+                SwingPanel(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    factory = {
+                        chartPane
+                    },
+                    update = {
+                        chartPane.chart = chart
                     }
-                    false
-                }
-            ) {
+                )
 
-                Column {
+                Divider(modifier = Modifier.fillMaxWidth())
 
-                    val data = XYSeriesCollection()
-                    val htlcMaximumMsatSeries = XYSeries("htlcMaximumMsat", true)
-                    selectedChannel?.channelUpdates?.forEach {
-                        val timeInt = LocalDateTime.parse(
-                            it.timestamp,
-                            DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
-                        ).toEpochSecond(ZoneOffset.UTC)
-
-                        htlcMaximumMsatSeries.add(XYDataItem(timeInt, it.htlcMaximumMsat))
-                    }
-                    data.addSeries(htlcMaximumMsatSeries)
-                    val chart = ChartFactory.createScatterPlot(
-                        null,
-                        "timestamp[ms]",
-                        "htlcMaximumMsat[BTC]",
-                        data,
-                    )
-                    (chart.plot as XYPlot).renderer =
-                        XYLineAndShapeRenderer().apply { setSeriesLinesVisible(0, true) }
-                    val chartPane = ChartPanel(chart)
-
-                    SwingPanel(
-                        modifier = Modifier.fillMaxWidth().weight(1f),
-                        factory = {
-                            chartPane
-                        },
-                        update = {
-                            chartPane.chart = chart
-                        }
-                    )
-
-                    Divider(modifier = Modifier.fillMaxWidth())
-
-                    LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                        items(selectedChannel?.channelUpdates ?: listOf()) {
-                            Text(it.toString())
-                        }
+                LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                    items(selected?.channelUpdates ?: listOf()) {
+                        Text(it.toString())
+                        Divider()
                     }
                 }
             }
+        },
+        listTopRowLayout = {
+            Text("ChannelID")
+            Spacer(modifier = Modifier.weight(1f))
+            Text("Updates")
+        },
+        listItemLayout = {
+            Text(it.shortChannelId)
+            Spacer(modifier = Modifier.weight(1f))
+            Text(it.channelUpdates.size.toString())
         }
-    }
+    )
 }
