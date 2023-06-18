@@ -1,3 +1,13 @@
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.Divider
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+
 class Node(val id: String) {
     val channels = mutableListOf<Channel>()
 
@@ -12,4 +22,28 @@ class Node(val id: String) {
     override fun toString(): String {
         return "Node(id='$id', channels=$channels)"
     }
+}
+
+@Composable
+fun NodeDetailComponent(node: Node) {
+    SelectableListComponent(
+        node.channels,
+        detailWindowTitle = { "Channel ${it?.shortChannelId}" },
+        detailWindowLayout = {
+            if (it != null) {
+                ChannelDetailComponent(it)
+            }
+        },
+        listItemLayout = {
+            Column{
+                Text(it.shortChannelId)
+                Row{
+                    Text(it.node1?.id.toString())
+                    Text(" - ", modifier = Modifier.weight(1f))
+                    Text(it.node2?.id.toString())
+                }
+            }
+        },
+        listTitle = "Channels",
+    )
 }

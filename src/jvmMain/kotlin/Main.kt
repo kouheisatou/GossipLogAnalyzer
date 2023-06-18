@@ -46,15 +46,10 @@ fun main() = application {
             topologyAnalyzer,
             "Drop channel_announcement log file here!",
             topologyAnalyzer.nodeListForDisplay.value ?: listOf(),
-            detailWindowTitle = {
-                it?.id ?: ""
-            },
+            detailWindowTitle = { "Node ${it?.id}" },
             detailWindowLayout = {
-                LazyColumn {
-                    items(it?.channels ?: listOf()) {
-                        Text(it.toString())
-                        Divider()
-                    }
+                if (it != null) {
+                    NodeDetailComponent(it)
                 }
             },
             listTopRowLayout = {
@@ -75,50 +70,10 @@ fun main() = application {
         gossipAnalyzer,
         "Drop channel_update log file here!",
         listData = gossipAnalyzer.channelsForDisplay.value ?: listOf(),
-        detailWindowTitle = { it?.shortChannelId.toString() },
+        detailWindowTitle = { "Channel ${it?.shortChannelId}" },
         detailWindowLayout = { selected ->
-
-            Column {
-
-                val data = XYSeriesCollection()
-                val htlcMaximumMsatSeries = XYSeries("htlcMaximumMsat", true)
-                selected?.channelUpdates?.forEach {
-                    val timeInt = LocalDateTime.parse(
-                        it.timestamp,
-                        DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
-                    ).toEpochSecond(ZoneOffset.UTC)
-
-                    htlcMaximumMsatSeries.add(XYDataItem(timeInt, it.htlcMaximumMsat))
-                }
-                data.addSeries(htlcMaximumMsatSeries)
-                val chart = ChartFactory.createScatterPlot(
-                    null,
-                    "timestamp[ms]",
-                    "htlcMaximumMsat[BTC]",
-                    data,
-                )
-                (chart.plot as XYPlot).renderer =
-                    XYLineAndShapeRenderer().apply { setSeriesLinesVisible(0, true) }
-                val chartPane = ChartPanel(chart)
-
-                SwingPanel(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    factory = {
-                        chartPane
-                    },
-                    update = {
-                        chartPane.chart = chart
-                    }
-                )
-
-                Divider(modifier = Modifier.fillMaxWidth())
-
-                LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                    items(selected?.channelUpdates ?: listOf()) {
-                        Text(it.toString())
-                        Divider()
-                    }
-                }
+            if(selected != null) {
+                ChannelDetailComponent(selected)
             }
         },
         listTopRowLayout = {

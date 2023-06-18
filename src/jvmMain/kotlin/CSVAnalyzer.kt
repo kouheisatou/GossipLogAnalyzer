@@ -155,75 +155,13 @@ fun <T> CSVAnalyzerWindow(
             }
 
             AnalyzerWindowState.Analyzed -> {
-
-
-                var selected by remember { mutableStateOf<T?>(null) }
-
-                Column {
-                    Row {
-                        listTopRowLayout()
-                    }
-                    Divider(modifier = Modifier.fillMaxWidth())
-                    Row {
-                        val listState = rememberLazyListState()
-                        LazyColumn(modifier = Modifier.weight(1f), state = listState) {
-                            items(listData) {
-                                Row(
-                                    modifier = Modifier
-                                        .clickable {
-                                            selected = it
-                                        }
-                                        .background(
-                                            if (selected == it) {
-                                                Color.LightGray
-                                            } else {
-                                                Color.White
-                                            }
-                                        )
-                                ) {
-                                    listItemLayout(it)
-                                }
-                            }
-                        }
-                        VerticalScrollbar(
-                            modifier = Modifier.fillMaxHeight(),
-                            adapter = rememberScrollbarAdapter(listState),
-                        )
-                    }
-                }
-                if (selected != null) {
-
-                    Window(
-                        onCloseRequest = { selected = null },
-                        title = detailWindowTitle(selected),
-                        onKeyEvent = {
-                            if (it.type == KeyEventType.KeyDown) {
-                                when (it.key.keyCode) {
-                                    Key.Escape.keyCode -> {
-                                        selected = null
-                                    }
-
-                                    Key.DirectionDown.keyCode -> {
-                                        val index = listData.indexOf(selected) + 1
-                                        if (index in listData.indices) {
-                                            selected = listData[index]
-                                        }
-                                    }
-
-                                    Key.DirectionUp.keyCode -> {
-                                        val index = listData.indexOf(selected) - 1
-                                        if (index in listData.indices) {
-                                            selected = listData[index]
-                                        }
-                                    }
-                                }
-                            }
-                            false
-                        }
-                    ) {
-                        detailWindowLayout(selected)
-                    }
-                }
+                SelectableListComponent(
+                    listData,
+                    detailWindowTitle,
+                    detailWindowLayout,
+                    listItemLayout,
+                    listTopRowLayout = listTopRowLayout,
+                )
             }
         }
 
