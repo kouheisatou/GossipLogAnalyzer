@@ -4,17 +4,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyShortcut
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.FrameWindowScope
-import androidx.compose.ui.window.MenuBar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.awt.Toolkit
-import java.awt.datatransfer.StringSelection
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -85,7 +80,7 @@ fun <T> CSVAnalyzerWindow(
     detailWindowLayout: @Composable FrameWindowScope.(selectedItem: T?) -> Unit,
     listTopRowLayout: @Composable () -> Unit,
     listItemLayout: @Composable (listItem: T) -> Unit,
-    findBy: (searchText: String) -> T?,
+    findByText: (searchText: String) -> T?,
     fetchLatestDetail: (selectedItem: T) -> T?,
     clipboardText: (selectedItem: T?) -> String?,
 ) {
@@ -146,7 +141,7 @@ fun <T> CSVAnalyzerWindow(
                         listTopRowLayout = { listTopRowLayout() },
                         fetchLatestDetail = fetchLatestDetail,
                         clipboardText = clipboardText,
-                        findBy = findBy
+                        findByText = findByText
                     )
                 }
             }

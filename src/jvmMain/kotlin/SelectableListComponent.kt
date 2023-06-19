@@ -41,35 +41,48 @@ fun <T> SelectableListComponent(
     listTopRowLayout: (@Composable () -> Unit)? = null,
     listTitle: String? = null,
     modifier: Modifier = Modifier,
-    findBy: ((searchText: String) -> T?)? = null,
+    findByText: ((searchText: String) -> T?)? = null,
 ) {
     var selectedItem by remember { mutableStateOf<T?>(null) }
     val focusRequester = remember { FocusRequester() }
+    var detailWindowOpened by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
-    var size by remember { mutableStateOf<IntSize?>(null) }
+    var listComponentSize by remember { mutableStateOf<IntSize?>(null) }
+    var listItemComponentSize by remember { mutableStateOf<IntSize?>(null) }
 
     LaunchedEffect(selectedItem) {
         val index = listDataForDisplay.indexOf(selectedItem)
         if (index !in listDataForDisplay.indices) return@LaunchedEffect
-        listState.scrollToItem(index, scrollOffset = -(size?.height ?: 0) / 2)
+
+        if (listItemComponentSize != null && listComponentSize != null) {
+            val displayingItemsCount = listComponentSize!!.height / listItemComponentSize!!.height
+            val startIndex = listState.firstVisibleItemIndex
+            val endIndex = startIndex + displayingItemsCount
+            if (index !in startIndex..endIndex) {
+                listState.scrollToItem(index, scrollOffset = -(listComponentSize?.height ?: 0) / 2)
+            }
+        } else {
+            listState.scrollToItem(index, scrollOffset = 0)
+        }
     }
 
     Column(
-        modifier = modifier.onSizeChanged { size = it }
+        modifier = modifier.onSizeChanged { listComponentSize = it }
     ) {
         if (listTitle != null) {
             Text(listTitle)
         }
-        if (findBy != null) {
+        if (findByText != null) {
 
             var searchText by remember { mutableStateOf("") }
             var result by remember { mutableStateOf<T?>(null) }
 
             fun search() {
-                result = findBy(searchText)
+                result = findByText(searchText)
                 if (result != null) {
                     println(result.toString())
                     selectedItem = result
+                    detailWindowOpened = true
                 }
             }
 
@@ -88,7 +101,7 @@ fun <T> SelectableListComponent(
                             searchText = it
                         },
                         singleLine = true,
-                        isError = (searchText != "" && findBy(searchText) == null),
+                        isError = (searchText != "" && findByText(searchText) == null),
                     )
                     IconButton(
                         onClick = {
@@ -117,9 +130,14 @@ fun <T> SelectableListComponent(
                     Column(
                         modifier = Modifier
                             .onPointerEvent(PointerEventType.Press) {
-                                println(listItem)
-                                selectedItem = fetchLatestDetail(listItem)
-                                focusRequester.requestFocus()
+                                if (selectedItem == listItem) {
+                                    selectedItem = null
+                                } else {
+                                    println(listItem)
+                                    selectedItem = fetchLatestDetail(listItem)
+                                    focusRequester.requestFocus()
+                                    detailWindowOpened = true
+                                }
                             }
                             .onPointerEvent(PointerEventType.Enter) { mouseHovering = true }
                             .onPointerEvent(PointerEventType.Exit) { mouseHovering = false }
@@ -138,6 +156,7 @@ fun <T> SelectableListComponent(
                                 }
                             )
                             .fillMaxWidth()
+                            .onSizeChanged { listItemComponentSize = it }
                     ) {
                         listItemLayout(listItem)
                         Divider()
@@ -151,7 +170,7 @@ fun <T> SelectableListComponent(
         }
     }
 
-    if (selectedItem != null) {
+    if (selectedItem != null && detailWindowOpened) {
 
         Window(
             onCloseRequest = { selectedItem = null },
@@ -160,7 +179,7 @@ fun <T> SelectableListComponent(
                 if (it.type == KeyEventType.KeyDown) {
                     when (it.key.keyCode) {
                         Key.Escape.keyCode -> {
-                            selectedItem = null
+                            detailWindowOpened = false
                         }
 
                         Key.DirectionDown.keyCode -> {
@@ -192,7 +211,7 @@ fun <T> SelectableListComponent(
             MenuBar {
                 Menu("edit") {
                     Item(
-                        "Copy",
+                        "Copy ID",
                         onClick = {
                             // copy to clipboard
                             val text = clipboardText(selectedItem ?: return@Item) ?: return@Item

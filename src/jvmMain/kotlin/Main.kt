@@ -45,7 +45,7 @@ fun main() = application {
             fetchLatestDetail = {
                 nodes.findByNodeId(it.id)
             },
-            findBy = {
+            findByText = {
                 nodes.findByNodeId(it)
             },
             clipboardText = {
@@ -82,7 +82,7 @@ fun main() = application {
         fetchLatestDetail = {
             channels.findChannelById(it.shortChannelId)
         },
-        findBy = {
+        findByText = {
             channels.findChannelById(it)
         },
         clipboardText = {

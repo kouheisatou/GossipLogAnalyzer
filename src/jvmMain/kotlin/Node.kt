@@ -51,7 +51,7 @@ fun NodeDetailComponent(node: Node) {
         clipboardText = {
             node.id
         },
-        findBy = {
+        findByText = {
             channels.findChannelById(it)
         }
     )
