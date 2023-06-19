@@ -10,7 +10,6 @@ val nodeAnalyzer = NodeAnalyzer()
 val channels = ChannelHashSet()
 val nodes = NodeHashSet()
 
-@OptIn(ExperimentalMaterialApi::class)
 fun main() = application {
     if(channelAnalyzer.state.value == AnalyzerWindowState.Analyzed && nodeAnalyzer.state.value == AnalyzerWindowState.Analyzed){
         TopologyWindow(Topology())
@@ -46,8 +45,7 @@ fun main() = application {
             fetchLatestDetail = {
                 nodes.findByNodeId(it.id)
             },
-            selectedItem = nodeAnalyzer.selectedNode,
-            findById = {
+            findBy = {
                 nodes.findByNodeId(it)
             },
             clipboardText = {
@@ -67,7 +65,6 @@ fun main() = application {
                 ChannelDetailComponent(selected)
             }
         },
-        selectedItem = channelAnalyzer.selectedChannel,
         listTopRowLayout = {
             Row {
                 Text("ChannelID")
@@ -85,7 +82,7 @@ fun main() = application {
         fetchLatestDetail = {
             channels.findChannelById(it.shortChannelId)
         },
-        findById = {
+        findBy = {
             channels.findChannelById(it)
         },
         clipboardText = {

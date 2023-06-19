@@ -81,7 +81,7 @@ fun ChannelDetailComponent(channel: Channel) {
             SelectableListComponent(
                 listTitle = "Nodes",
                 modifier = Modifier.weight(1f),
-                listData = listOf(channel.node1, channel.node2),
+                listDataForDisplay = listOf(channel.node1, channel.node2),
                 detailWindowTitle = { "Node ${it?.id}" },
                 detailWindowLayout = {
                     if (it != null) {
@@ -96,7 +96,7 @@ fun ChannelDetailComponent(channel: Channel) {
                 },
                 clipboardText = {
                     channel.shortChannelId
-                }
+                },
             )
 
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {

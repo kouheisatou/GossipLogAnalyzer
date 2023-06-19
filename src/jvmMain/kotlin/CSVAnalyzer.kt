@@ -4,9 +4,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.input.key.*
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyShortcut
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.FrameWindowScope
@@ -86,14 +85,12 @@ fun <T> CSVAnalyzerWindow(
     detailWindowLayout: @Composable FrameWindowScope.(selectedItem: T?) -> Unit,
     listTopRowLayout: @Composable () -> Unit,
     listItemLayout: @Composable (listItem: T) -> Unit,
-    findById: (searchText: String) -> T?,
-    selectedItem: MutableState<T?> = mutableStateOf(null),
+    findBy: (searchText: String) -> T?,
     fetchLatestDetail: (selectedItem: T) -> T?,
     clipboardText: (selectedItem: T?) -> String?,
 ) {
     var progress by remember { mutableStateOf(0f) }
     var readingLine by remember { mutableStateOf("") }
-    val focusRequester = remember { FocusRequester() }
     DropFileWindow(
         onCloseRequest = { exitProcess(0) },
         title = windowTitle,
@@ -123,28 +120,6 @@ fun <T> CSVAnalyzerWindow(
             }
         },
         content = {
-            MenuBar {
-                Menu("edit") {
-                    Item(
-                        "Copy",
-                        onClick = {
-                            // copy to clipboard
-                            val text = clipboardText(selectedItem.value ?: return@Item) ?: return@Item
-                            Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
-                            println(text)
-                        },
-                        shortcut = KeyShortcut(Key.C, meta = true)
-                    )
-                    Item(
-                        "Find",
-                        onClick = {
-                            focusRequester.requestFocus()
-                        },
-                        shortcut = KeyShortcut(Key.F, meta = true)
-                    )
-                }
-            }
-
             when (analyzer.state.value) {
                 AnalyzerWindowState.Initialized -> {
                     Text(dropFileMsg, modifier = Modifier.fillMaxSize(), textAlign = TextAlign.Center)
@@ -168,51 +143,10 @@ fun <T> CSVAnalyzerWindow(
                         detailWindowTitle,
                         detailWindowLayout,
                         listItemLayout,
-                        listTopRowLayout = {
-                            Column {
-
-                                var searchText by remember { mutableStateOf("") }
-                                var result by remember { mutableStateOf<T?>(null) }
-                                Column {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        TextField(
-                                            modifier = Modifier
-                                                .onKeyEvent {
-                                                    if (it.type == KeyEventType.KeyDown && it.key.keyCode == Key.Enter.keyCode) {
-                                                        result = findById(searchText)
-                                                        if (result != null) {
-                                                            selectedItem.value = result
-                                                        }
-                                                    }
-                                                    false
-                                                }
-                                                .focusRequester(focusRequester),
-                                            value = searchText,
-                                            onValueChange = {
-                                                searchText = it
-                                            },
-                                            singleLine = true,
-                                            isError = (searchText != "" && findById(searchText) == null),
-                                        )
-                                        IconButton(
-                                            onClick = {
-                                                result = findById(searchText)
-                                                if (result != null) {
-                                                    selectedItem.value = result
-                                                }
-                                            }
-                                        ) {
-                                            Text("🔍")
-                                        }
-                                    }
-                                }
-
-                                listTopRowLayout()
-                            }
-                        },
-                        externalControlledSelectedItem = selectedItem,
+                        listTopRowLayout = { listTopRowLayout() },
                         fetchLatestDetail = fetchLatestDetail,
                         clipboardText = clipboardText,
+                        findBy = findBy
                     )
                 }
             }

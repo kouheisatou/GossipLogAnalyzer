@@ -16,11 +16,11 @@ class Node(val id: String) {
     }
 
     override fun toString(): String {
-        var channelIdsText = ""
+        val channelIds = mutableListOf<String>()
         channels.forEach {
-            channelIdsText += it.shortChannelId + ","
+            channelIds += it.shortChannelId
         }
-        return "Node(id='$id', channels=$channelIdsText)"
+        return "Node(id='$id', channels=$channelIds)"
     }
 }
 
@@ -50,6 +50,9 @@ fun NodeDetailComponent(node: Node) {
         },
         clipboardText = {
             node.id
+        },
+        findBy = {
+            channels.findChannelById(it)
         }
     )
 }
