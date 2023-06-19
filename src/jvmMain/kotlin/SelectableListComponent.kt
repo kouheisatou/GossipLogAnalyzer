@@ -127,22 +127,25 @@ fun <T> SelectableListComponent(
             ) {
                 items(listDataForDisplay) { listItem ->
                     var mouseHovering by remember { mutableStateOf(false) }
+                    var mousePressing by remember { mutableStateOf(false) }
                     Column(
                         modifier = Modifier
                             .onPointerEvent(PointerEventType.Press) {
-                                if (selectedItem == listItem) {
-                                    selectedItem = null
-                                } else {
-                                    println(listItem)
-                                    selectedItem = fetchLatestDetail(listItem)
-                                    focusRequester.requestFocus()
-                                    detailWindowOpened = true
-                                }
+                                println(listItem)
+                                selectedItem = fetchLatestDetail(listItem)
+                                focusRequester.requestFocus()
+                                detailWindowOpened = true
+                                mousePressing = true
+                            }
+                            .onPointerEvent(PointerEventType.Release) {
+                                mousePressing = false
                             }
                             .onPointerEvent(PointerEventType.Enter) { mouseHovering = true }
                             .onPointerEvent(PointerEventType.Exit) { mouseHovering = false }
                             .background(
-                                if (selectedItem == listItem) {
+                                if (mousePressing) {
+                                    Color.Gray
+                                } else if (selectedItem == listItem) {
                                     Color.LightGray
                                 } else {
                                     Color.Transparent
