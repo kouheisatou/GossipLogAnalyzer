@@ -1,7 +1,10 @@
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import edu.uci.ics.jung.layout.algorithms.StaticLayoutAlgorithm
+import java.awt.Dimension
 
 
 val channelAnalyzer = ChannelAnalyzer()
@@ -11,8 +14,13 @@ val channels = ChannelHashSet()
 val nodes = NodeHashSet()
 
 fun main() = application {
-    if(channelAnalyzer.state.value == AnalyzerWindowState.Analyzed && nodeAnalyzer.state.value == AnalyzerWindowState.Analyzed){
-        TopologyWindow(Topology())
+    if (channelAnalyzer.state.value == AnalyzerWindowState.Analyzed && nodeAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
+        Window(
+            onCloseRequest = {},
+            title = "topology"
+        ) {
+            TopologyComponent(Topology(Dimension(19200, 10800), 30, StaticLayoutAlgorithm(), channels))
+        }
     }
 
     if (channelAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
