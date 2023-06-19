@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 class Node(val id: String) {
-    val channels = mutableListOf<Channel>()
+    val channels = mutableSetOf<Channel>()
 
     override fun equals(other: Any?): Boolean {
         return other is Node && id == other.id
@@ -27,7 +27,7 @@ class Node(val id: String) {
 @Composable
 fun NodeDetailComponent(node: Node) {
     SelectableListComponent(
-        node.channels,
+        node.channels.toList(),
         detailWindowTitle = { "Channel ${it?.shortChannelId}" },
         detailWindowLayout = {
             if (it != null) {

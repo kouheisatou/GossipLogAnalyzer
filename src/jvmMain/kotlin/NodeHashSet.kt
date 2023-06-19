@@ -5,35 +5,59 @@ private const val HASH_MAP_SIZE = 10000
 class NodeHashSet {
     private val hashMap: Array<MutableList<Node>?> = Array(HASH_MAP_SIZE) { null }
 
-    private fun calcHashMapIndex(node: Node): Int {
-        return node.hashCode().absoluteValue % HASH_MAP_SIZE
+    private fun calcHashMapIndex(nodeId: String): Int {
+        return Node(nodeId).hashCode().absoluteValue % HASH_MAP_SIZE
     }
 
-    fun add(node: Node, channel: Channel) {
-        val holder = hashMap[calcHashMapIndex(node)]
-        if (holder == null) {
-            hashMap[calcHashMapIndex(node)] = mutableListOf(node.apply { channels.add(channel) })
+    fun add(nodeId1: String, nodeId2: String, channel: Channel?) {
+        val holder1 = hashMap[calcHashMapIndex(nodeId1)]
+        if (holder1 == null) {
+            val newNode1 = Node(nodeId1).apply { channel?.let { channels.add(it) } }
+            channel?.node1 = newNode1
+            hashMap[calcHashMapIndex(nodeId1)] = mutableListOf(newNode1)
         } else {
             var nodeAlreadyExists = false
-            for (nodeInHolder in holder) {
-                if (node == nodeInHolder) {
-                    if(!nodeInHolder.channels.contains(channel)) {
-                        nodeInHolder.channels.add(channel)
-                    }
+            for (alreadyAddedNode in holder1) {
+                if (nodeId1 == alreadyAddedNode.id) {
+                    channel?.let { alreadyAddedNode.channels.add(it) }
+                    channel?.node1 = alreadyAddedNode
                     nodeAlreadyExists = true
                     break
                 }
             }
-
             if (!nodeAlreadyExists) {
-                holder.add(node.apply { channels.add(channel) })
+                val newNode1 = Node(nodeId1).apply { channel?.let { channels.add(it) } }
+                channel?.node1 = newNode1
+                holder1.add(newNode1)
+            }
+        }
+
+        val holder2 = hashMap[calcHashMapIndex(nodeId2)]
+        if (holder2 == null) {
+            val newNode2 = Node(nodeId2).apply { channel?.let { channels.add(it) } }
+            channel?.node2 = newNode2
+            hashMap[calcHashMapIndex(nodeId2)] = mutableListOf(newNode2)
+        } else {
+            var nodeAlreadyExists = false
+            for (alreadyAddedNode in holder2) {
+                if (nodeId2 == alreadyAddedNode.id) {
+                    channel?.let { alreadyAddedNode.channels.add(it) }
+                    channel?.node2 = alreadyAddedNode
+                    nodeAlreadyExists = true
+                    break
+                }
+            }
+            if (!nodeAlreadyExists) {
+                val newNode2 = Node(nodeId2).apply { channel?.let { channels.add(it) } }
+                channel?.node2 = newNode2
+                holder2.add(newNode2)
             }
         }
     }
 
     fun findByNodeId(nodeId: String?): Node? {
         nodeId ?: return null
-        val nodeHolder = hashMap[calcHashMapIndex(Node(nodeId))] ?: return null
+        val nodeHolder = hashMap[calcHashMapIndex(nodeId)] ?: return null
 
         for (nodeInHolder in nodeHolder) {
             if (nodeInHolder.id == nodeId) {
@@ -46,14 +70,12 @@ class NodeHashSet {
 
     fun toList(): List<Node> {
         val result = mutableListOf<Node>()
-//        println("index\tused\tchannelIds")
-        for (nodes in hashMap.withIndex()) {
+        for (nodes in hashMap) {
             var nodeIdsText = ""
-            for (node in nodes.value ?: listOf()) {
+            for (node in nodes ?: listOf()) {
                 result.add(node)
-                nodeIdsText += "${node.id},"
+                nodeIdsText += "${node},"
             }
-//            println("${nodes.index}\t${nodes.value?.size ?: 0}\t$nodeIdsText")
         }
         return result.sortedByDescending { it.channels.size }
     }

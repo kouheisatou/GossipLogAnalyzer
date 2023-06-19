@@ -131,11 +131,11 @@ fun <T> SelectableListComponent(
                     Column(
                         modifier = Modifier
                             .onPointerEvent(PointerEventType.Press) {
-                                println(listItem)
                                 selectedItem = fetchLatestDetail(listItem)
                                 focusRequester.requestFocus()
                                 detailWindowOpened = true
                                 mousePressing = true
+                                println(selectedItem)
                             }
                             .onPointerEvent(PointerEventType.Release) {
                                 mousePressing = false

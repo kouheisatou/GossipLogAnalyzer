@@ -5,7 +5,6 @@ import java.io.File
 class NodeAnalyzer : CSVAnalyzer() {
 
     var nodeListForDisplay = mutableStateOf<List<Node>?>(null)
-    val selectedNode = mutableStateOf<Node?>(null)
 
     override fun analyzeCSVLine(lineText: String?) {
         if (lineText == null) return
@@ -24,16 +23,9 @@ class NodeAnalyzer : CSVAnalyzer() {
             csvElement[10],
         )
 
-        val node1 = Node(channelAnnouncement.nodeId1)
-        val node2 = Node(channelAnnouncement.nodeId2)
+        val channel = channels.findChannelById(channelAnnouncement.shortChannelId)
 
-        val channel = channels.findChannelById(channelAnnouncement.shortChannelId)?.apply {
-            this.node1 = node1
-            this.node2 = node2
-        } ?: return
-
-        nodes.add(node1, channel)
-        nodes.add(node2, channel)
+        nodes.add(channelAnnouncement.nodeId1, channelAnnouncement.nodeId2, channel)
     }
 
     override fun onAnalyzingFinished() {

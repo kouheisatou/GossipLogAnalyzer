@@ -29,25 +29,8 @@ class Topology {
     )
 
     init {
-        println(nodes.findByNodeId("02ee101be22a097eb658131b58a76b6850e3f1b87c9d4492f3c34d1b05089b8515"))
-        println(nodes.findByNodeId("022c260f9ad58196af280c80a96ec9eabf6404df59ff1a7553b0f381c875a29ba0"))
-        println(channels.findChannelById("694804:911:1")?.node1 )
-        println()
-
         for (channel in channels.toList()) {
-            if(channel.shortChannelId == "694804:911:1"){
-                println(channel.node1)
-                println(channel)
-            }
-
             if (channel.node2 != null && channel.node1 != null) {
-
-                if (channel.node1?.id == "02ee101be22a097eb658131b58a76b6850e3f1b87c9d4492f3c34d1b05089b8515") {
-                    println(channel.node1.toString())
-                    println(channel.node1?.channels.toString())
-                    println()
-                    // inbound と outbound　が1つずつあるノードのchannelsが空になる
-                }
                 g.addEdge(channel.node1!!, channel.node2!!, channel)
             }
         }
@@ -70,7 +53,6 @@ fun TopologyWindow(topology: Topology) {
                 val viewer = VisualizationViewer(
                     BaseVisualizationModel(
                         topology.g,
-//                        FRLayoutAlgorithm(),
                         StaticLayoutAlgorithm(),
                         graphSize
                     ),
