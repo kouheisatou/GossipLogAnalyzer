@@ -6,17 +6,20 @@ import androidx.compose.ui.window.Window
 import com.google.common.graph.MutableNetwork
 import com.google.common.graph.NetworkBuilder
 import edu.uci.ics.jung.graph.util.Graphs
+import edu.uci.ics.jung.layout.algorithms.BalloonLayoutAlgorithm
 import edu.uci.ics.jung.layout.algorithms.FRLayoutAlgorithm
 import edu.uci.ics.jung.layout.algorithms.StaticLayoutAlgorithm
 import edu.uci.ics.jung.visualization.BaseVisualizationModel
 import edu.uci.ics.jung.visualization.VisualizationViewer
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse
+import java.awt.BasicStroke
 import java.awt.Dimension
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
+import javax.swing.KeyStroke
 
 
 class Topology {
@@ -28,10 +31,22 @@ class Topology {
             .build()
     )
 
+    var maxBaseFee = 0
+    var maxChannelUpdateCount = 0
+
     init {
         for (channel in channels.toList()) {
             if (channel.node2 != null && channel.node1 != null) {
                 g.addEdge(channel.node1!!, channel.node2!!, channel)
+
+                if (channel.channelUpdates.size > maxChannelUpdateCount) {
+                    maxChannelUpdateCount = channel.channelUpdates.size
+                }
+                for (channelUpdate in channel.channelUpdates) {
+                    if (channelUpdate.baseFee > maxBaseFee) {
+                        maxBaseFee = channelUpdate.baseFee
+                    }
+                }
             }
         }
     }
@@ -68,6 +83,11 @@ fun TopologyWindow(topology: Topology) {
                         Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(it.id), null)
                     }
                     it?.toString()
+                }
+
+                viewer.renderContext.setEdgeStrokeFunction {
+//                    BasicStroke(30f * (it.channelUpdates.firstOrNull()?.baseFee ?: 0) / topology.maxBaseFee)
+                    BasicStroke(30f * it.channelUpdates.size / topology.maxChannelUpdateCount)
                 }
 
                 viewer.setEdgeToolTipFunction {

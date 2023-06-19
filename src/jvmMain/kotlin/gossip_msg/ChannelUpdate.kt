@@ -9,7 +9,7 @@ data class ChannelUpdate(
     val channelFlags: String,
     val timeLockDelta: String,
     val htlcMinimumMsat: Float,
-    val baseFee: String,
-    val feeRate: String,
+    val baseFee: Int,
+    val feeRate: Int,
     val htlcMaximumMsat: Float,
 )

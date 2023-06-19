@@ -55,7 +55,7 @@ fun main() = application {
     }
 
     CSVAnalyzerWindow(
-        "GossipLogAnalyzer",
+        "ChannelList",
         channelAnalyzer,
         "Drop channel_update log file here!",
         listData = channelAnalyzer.channelsForDisplay.value ?: listOf(),
