@@ -1,5 +1,8 @@
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -14,12 +17,23 @@ val channels = ChannelHashSet()
 val nodes = NodeHashSet()
 
 fun main() = application {
+
     if (channelAnalyzer.state.value == AnalyzerWindowState.Analyzed && nodeAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
         Window(
             onCloseRequest = {},
             title = "topology"
         ) {
-            TopologyComponent(Topology(Dimension(19200, 10800), 30, StaticLayoutAlgorithm(), channels))
+            val topology by remember {
+                mutableStateOf(
+                    Topology(
+                        Dimension(19200, 10800),
+                        30,
+                        StaticLayoutAlgorithm(),
+                        channels
+                    )
+                )
+            }
+            TopologyComponent(topology)
         }
     }
 

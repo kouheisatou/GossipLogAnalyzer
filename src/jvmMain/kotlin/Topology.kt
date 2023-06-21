@@ -2,12 +2,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
-import androidx.compose.ui.window.Window
 import com.google.common.graph.MutableNetwork
 import com.google.common.graph.NetworkBuilder
 import edu.uci.ics.jung.graph.util.Graphs
 import edu.uci.ics.jung.layout.algorithms.LayoutAlgorithm
-import edu.uci.ics.jung.layout.algorithms.StaticLayoutAlgorithm
 import edu.uci.ics.jung.visualization.BaseVisualizationModel
 import edu.uci.ics.jung.visualization.VisualizationViewer
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse
@@ -21,7 +19,7 @@ class Topology(
     val maxStrokeWidth: Int,
     val algorithm: LayoutAlgorithm<Node>,
 ) {
-    val g: MutableNetwork<Node, Channel> = Graphs.synchronizedNetwork(
+    val g: MutableNetwork<Node, Edge> = Graphs.synchronizedNetwork(
         NetworkBuilder
             .directed()
             .allowsParallelEdges(true)
@@ -29,8 +27,7 @@ class Topology(
             .build()
     )
 
-    var maxBaseFee = 0
-    var maxChannelUpdateCount = 0
+    var maxEdgeCapacity = 0
 
     var rootNode: Node? = null
 
@@ -46,18 +43,19 @@ class Topology(
         algorithm
     ) {
         for (channel in channels.toList()) {
-
             if (channel.node2 != null && channel.node1 != null) {
-                g.addEdge(channel.node1!!, channel.node2!!, channel)
+                val edge1To2 = Edge(channel, Direction.Node1ToNode2)
+                val edge2To1 = Edge(channel, Direction.Node2ToNode1)
 
-                if (channel.channelUpdates.size > maxChannelUpdateCount) {
-                    maxChannelUpdateCount = channel.channelUpdates.size
+                if (edge1To2.capacity > maxEdgeCapacity) {
+                    maxEdgeCapacity = edge1To2.capacity
                 }
-                for (channelUpdate in channel.channelUpdates) {
-                    if (channelUpdate.baseFee > maxBaseFee) {
-                        maxBaseFee = channelUpdate.baseFee
-                    }
+                if (edge2To1.capacity > maxEdgeCapacity) {
+                    maxEdgeCapacity = edge2To1.capacity
                 }
+
+                if (edge1To2.capacity > 0) g.addEdge(edge1To2.sourceNode, edge1To2.destinationNode, edge1To2)
+                if (edge2To1.capacity > 0) g.addEdge(edge2To1.sourceNode, edge2To1.destinationNode, edge2To1)
             }
         }
     }
@@ -68,42 +66,44 @@ class Topology(
         maxStrokeWidth: Int,
         algorithm: LayoutAlgorithm<Node>,
         node: Node,
-        depth: Int
+        maxDepth: Int
     ) : this(
         graphSize,
         maxStrokeWidth,
         algorithm
     ) {
         rootNode = node
-        var currentDepth = 0
 
-        fun build(node: Node) {
+        fun build(node: Node, depth: Int) {
 
-            currentDepth++
-            if (currentDepth > depth) return
+            if (maxDepth < depth) return
 
             node.channels.forEach { channel ->
 
-                if (channel.channelUpdates.size > maxChannelUpdateCount) {
-                    maxChannelUpdateCount = channel.channelUpdates.size
+                val edge1To2 = Edge(channel, Direction.Node1ToNode2)
+                val edge2To1 = Edge(channel, Direction.Node2ToNode1)
+
+                if (edge1To2.capacity > maxEdgeCapacity) {
+                    maxEdgeCapacity = edge1To2.capacity
                 }
-                channel.channelUpdates.forEach {
-                    if (it.baseFee > maxBaseFee) {
-                        maxBaseFee = it.baseFee
-                    }
+                if (edge2To1.capacity > maxEdgeCapacity) {
+                    maxEdgeCapacity = edge2To1.capacity
                 }
 
-                if (channel.node2 != node && channel.node2 != null) {
-                    g.addEdge(node, channel.node2!!, channel)
-                    build(channel.node2!!)
-                } else if (channel.node1 != node && channel.node1 != null) {
-                    g.addEdge(channel.node1!!, node, channel)
-                    build(channel.node1!!)
+                if (!g.edges().contains(edge1To2) && !g.edges().contains(edge2To1)) {
+                    if (edge1To2.capacity > 0) g.addEdge(edge1To2.sourceNode, edge1To2.destinationNode, edge1To2)
+                    if (edge2To1.capacity > 0) g.addEdge(edge2To1.sourceNode, edge2To1.destinationNode, edge2To1)
+
+                    if (channel.node2 != node && channel.node2 != null) {
+                        build(channel.node2!!, depth + 1)
+                    } else if (channel.node1 != node && channel.node1 != null) {
+                        build(channel.node1!!, depth + 1)
+                    }
                 }
             }
         }
 
-        build(node)
+        build(node, 0)
     }
 }
 
@@ -140,8 +140,7 @@ fun TopologyComponent(
 
             // edge stroke width
             viewer.renderContext.setEdgeStrokeFunction {
-//                    BasicStroke(30f * (it.channelUpdates.firstOrNull()?.baseFee ?: 0) / topology.maxBaseFee)
-                BasicStroke(topology.maxStrokeWidth.toFloat() * it.channelUpdates.size / topology.maxChannelUpdateCount)
+                BasicStroke(topology.maxStrokeWidth.toFloat() * it.capacity / topology.maxEdgeCapacity)
             }
 
             // root node color
@@ -157,7 +156,7 @@ fun TopologyComponent(
             viewer.setEdgeToolTipFunction {
                 if (it != null) {
                     Toolkit.getDefaultToolkit().systemClipboard.setContents(
-                        StringSelection(it.shortChannelId),
+                        StringSelection(it.channel.shortChannelId),
                         null
                     )
                 }

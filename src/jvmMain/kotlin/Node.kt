@@ -3,6 +3,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import edu.uci.ics.jung.layout.algorithms.FRLayoutAlgorithm
 import java.awt.Dimension
@@ -31,8 +34,8 @@ class Node(val id: String) {
 fun NodeDetailComponent(node: Node) {
     Column {
         TopologyComponent(
-            Topology(Dimension(1920, 1080), 5, FRLayoutAlgorithm(), node, 3),
-            modifier = Modifier.weight(1f)
+            Topology(Dimension(1920, 1080), 5, FRLayoutAlgorithm(), node, 2),
+            modifier = Modifier.weight(1f),
         )
 
         Divider()
