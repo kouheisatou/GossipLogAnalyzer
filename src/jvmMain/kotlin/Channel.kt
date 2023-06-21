@@ -45,16 +45,22 @@ class Channel(
 fun ChannelDetailComponent(channel: Channel) {
     Column {
         val data = XYSeriesCollection()
-        val htlcMaximumMsatSeries = XYSeries("htlcMaximumMsat", true)
+        val node1ToNode2Series = XYSeries("node1 to node2", true)
+        val node2ToNode1Series = XYSeries("node2 to node1", true)
         channel.channelUpdates.forEach {
             val timeInt = LocalDateTime.parse(
                 it.timestamp,
                 DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
             ).toEpochSecond(ZoneOffset.UTC)
 
-            htlcMaximumMsatSeries.add(XYDataItem(timeInt, it.htlcMaximumMsat))
+            if(it.channelFlags.endsWith("0")){
+                node1ToNode2Series.add(XYDataItem(timeInt, it.htlcMaximumMsat))
+            }else{
+                node2ToNode1Series.add(XYDataItem(timeInt, it.htlcMaximumMsat))
+            }
         }
-        data.addSeries(htlcMaximumMsatSeries)
+        data.addSeries(node1ToNode2Series)
+        data.addSeries(node2ToNode1Series)
         val chart = ChartFactory.createScatterPlot(
             null,
             "timestamp[ms]",
