@@ -4,6 +4,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.input.key.*
+import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import com.google.common.graph.MutableNetwork
 import com.google.common.graph.NetworkBuilder
@@ -202,6 +203,21 @@ fun TopologyComponent(
                 false
             }
         ) {
+            MenuBar {
+                Menu("edit") {
+                    Item(
+                        "Copy ID",
+                        onClick = {
+                            // copy to clipboard
+                            val text = selectedNode?.id ?: return@Item
+                            Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
+                            println(text)
+                        },
+                        shortcut = KeyShortcut(Key.C, meta = true)
+                    )
+                }
+            }
+
             NodeDetailComponent(selectedNode ?: return@Window)
         }
     }
@@ -217,6 +233,22 @@ fun TopologyComponent(
                 false
             }
         ) {
+
+            MenuBar {
+                Menu("edit") {
+                    Item(
+                        "Copy ID",
+                        onClick = {
+                            // copy to clipboard
+                            val text = selectedChannel?.shortChannelId ?: return@Item
+                            Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
+                            println(text)
+                        },
+                        shortcut = KeyShortcut(Key.C, meta = true)
+                    )
+                }
+            }
+
             ChannelDetailComponent(selectedChannel ?: return@Window)
         }
     }

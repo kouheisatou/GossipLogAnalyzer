@@ -175,6 +175,7 @@ fun <T> SelectableListComponent(
 
     if (selectedItem != null && detailWindowOpened) {
 
+        // detail window
         Window(
             onCloseRequest = { selectedItem = null },
             title = detailWindowTitle(selectedItem),
@@ -209,7 +210,6 @@ fun <T> SelectableListComponent(
                 false
             }
         ) {
-
 
             MenuBar {
                 Menu("edit") {

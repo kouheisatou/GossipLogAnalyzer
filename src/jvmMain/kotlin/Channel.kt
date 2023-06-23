@@ -53,9 +53,9 @@ fun ChannelDetailComponent(channel: Channel) {
                 DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
             ).toEpochSecond(ZoneOffset.UTC)
 
-            if(it.channelFlags.endsWith("0")){
+            if (it.channelFlags.endsWith("0")) {
                 node1ToNode2Series.add(XYDataItem(timeInt, it.htlcMaximumMsat))
-            }else{
+            } else {
                 node2ToNode1Series.add(XYDataItem(timeInt, it.htlcMaximumMsat))
             }
         }
@@ -101,7 +101,7 @@ fun ChannelDetailComponent(channel: Channel) {
                     nodes.findByNodeId(it?.id)
                 },
                 clipboardText = {
-                    channel.shortChannelId
+                    it?.id
                 },
             )
 

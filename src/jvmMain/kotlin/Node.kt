@@ -3,8 +3,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import edu.uci.ics.jung.layout.algorithms.FRLayoutAlgorithm
+import edu.uci.ics.jung.layout.algorithms.StaticLayoutAlgorithm
 import java.awt.Dimension
 
 class Node(val id: String) {
@@ -30,8 +34,19 @@ class Node(val id: String) {
 @Composable
 fun NodeDetailComponent(node: Node) {
     Column {
+        val topology by remember {
+            mutableStateOf(
+                Topology(
+                    Dimension(1920, 1080),
+                    5,
+                    FRLayoutAlgorithm(),
+                    node,
+                    1
+                ),
+            )
+        }
         TopologyComponent(
-            Topology(Dimension(1920, 1080), 5, FRLayoutAlgorithm(), node, 2),
+            topology,
             modifier = Modifier.weight(1f),
         )
 
@@ -61,7 +76,7 @@ fun NodeDetailComponent(node: Node) {
                 channels.findChannelById(it.shortChannelId)
             },
             clipboardText = {
-                node.id
+                it.shortChannelId
             },
             findByText = {
                 channels.findChannelById(it)
