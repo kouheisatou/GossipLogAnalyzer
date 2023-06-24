@@ -35,6 +35,8 @@ class NodeAnalyzer : CSVAnalyzer() {
     override fun onLogFileLoaded(logFile: File): String? {
         return if (channelAnalyzer.state.value != AnalyzerWindowState.Analyzed) {
             "Analyze channel_update log first."
+        } else if (!logFile.name.startsWith("channel_announcement")) {
+            "This file is not a channel_announcement log."
         } else {
             null
         }

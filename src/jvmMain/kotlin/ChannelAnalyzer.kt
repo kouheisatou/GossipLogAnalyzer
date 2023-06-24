@@ -1,5 +1,6 @@
 import androidx.compose.runtime.mutableStateOf
 import gossip_msg.ChannelUpdate
+import java.io.File
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -44,5 +45,13 @@ class ChannelAnalyzer : CSVAnalyzer() {
 
     override fun onAnalyzingFinished() {
         channelsForDisplay.value = channels.toList()
+    }
+
+    override fun onLogFileLoaded(logFile: File): String? {
+        return if (!logFile.name.startsWith("channel_update")) {
+            "This file is not a channel_update log."
+        } else {
+            null
+        }
     }
 }

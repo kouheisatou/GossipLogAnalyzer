@@ -46,8 +46,8 @@ abstract class CSVAnalyzer {
                     try {
                         analyzeCSVLine(line)
                     } catch (e: Exception) {
-                        e.printStackTrace()
                         if (lineCount != 0) {
+                            e.printStackTrace()
                             errorMsg.value = e.message
                             state.value = AnalyzerWindowState.Initialized
                             return@launch
