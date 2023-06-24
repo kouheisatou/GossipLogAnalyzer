@@ -46,9 +46,12 @@ abstract class CSVAnalyzer {
                     try {
                         analyzeCSVLine(line)
                     } catch (e: Exception) {
-                        errorMsg.value = e.message
-                        state.value = AnalyzerWindowState.Initialized
-                        return@launch
+                        e.printStackTrace()
+                        if (lineCount != 0) {
+                            errorMsg.value = e.message
+                            state.value = AnalyzerWindowState.Initialized
+                            return@launch
+                        }
                     }
 
                     progress(line, lineCount.toFloat() / maxLine!!)
