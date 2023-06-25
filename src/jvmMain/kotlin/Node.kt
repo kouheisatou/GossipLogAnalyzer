@@ -34,19 +34,15 @@ class Node(val id: String) {
 @Composable
 fun NodeDetailComponent(node: Node) {
     Column {
-        val topology by remember {
-            mutableStateOf(
-                Topology(
-                    Dimension(1920, 1080),
-                    5,
-                    FRLayoutAlgorithm(),
-                    node,
-                    1
-                ),
-            )
-        }
+
         TopologyComponent(
-            topology,
+            Topology(
+                Dimension(1920, 1080),
+                5,
+                FRLayoutAlgorithm(),
+                node,
+                1
+            ),
             modifier = Modifier.weight(1f),
         )
 

@@ -39,10 +39,13 @@ class Topology(
             .allowsSelfLoops(true)
             .build()
     )
+    val model = BaseVisualizationModel(g, algorithm, graphSize)
 
     var maxEdgeCapacity = 0
 
     var rootNode: Node? = null
+    var selectedNode = mutableStateOf<Node?>(null)
+    var selectedChannel = mutableStateOf<Channel?>(null)
 
     // overall graph
     constructor(
@@ -126,30 +129,28 @@ fun TopologyComponent(
     topology: Topology,
     modifier: Modifier = Modifier
 ) {
-    var selectedNode by remember { mutableStateOf<Node?>(null) }
-    var selectedChannel by remember { mutableStateOf<Channel?>(null) }
 
-    val viewer by remember {
-        mutableStateOf(
+    SwingPanel(
+        modifier = modifier.fillMaxSize(),
+        factory = {
             VisualizationViewer(
-                BaseVisualizationModel(topology.g, topology.algorithm, topology.graphSize),
+                topology.model,
                 topology.graphSize,
             ).apply {
 
                 // mouse control
-                val graphMouse = DefaultModalGraphMouse<Node, Channel>()
-                graphMouse.setMode(ModalGraphMouse.Mode.PICKING)
-                this.graphMouse = graphMouse
-                this.addKeyListener(graphMouse.modeKeyListener)
+                graphMouse = DefaultModalGraphMouse<Node, Channel>().apply {
+                    setMode(ModalGraphMouse.Mode.PICKING)
+                }
 
                 // on node clicked
                 pickedNodeState.addItemListener {
-                    selectedNode = it.item as Node
+                    topology.selectedNode.value = it.item as Node
                 }
 
                 // on edge clicked
                 pickedEdgeState.addItemListener {
-                    selectedChannel = (it.item as Edge).channel
+                    topology.selectedChannel.value = (it.item as Edge).channel
                 }
 
                 // edge stroke width
@@ -160,7 +161,7 @@ fun TopologyComponent(
                 // root node color
                 renderContext.setNodeFillPaintFunction {
                     return@setNodeFillPaintFunction when (it) {
-                        selectedNode -> Color.RED
+                        topology.selectedNode.value -> Color.RED
                         topology.rootNode -> Color.CYAN
                         else -> Color.WHITE
                     }
@@ -169,7 +170,7 @@ fun TopologyComponent(
                 // change edge color on selected
                 renderContext.setEdgeDrawPaintFunction {
                     return@setEdgeDrawPaintFunction when (it.channel) {
-                        selectedChannel -> Color.RED
+                        topology.selectedChannel.value -> Color.RED
                         else -> Color.BLACK
                     }
                 }
@@ -184,21 +185,17 @@ fun TopologyComponent(
                     it?.channel?.shortChannelId.toString()
                 }
             }
-        )
-    }
-
-    SwingPanel(
-        modifier = modifier.fillMaxSize(),
-        factory = { viewer },
+        },
+        update = {}
     )
 
-    if (selectedNode != null) {
+    if (topology.selectedNode.value != null) {
         Window(
-            onCloseRequest = { selectedNode = null },
-            title = selectedNode?.id.toString(),
+            onCloseRequest = { topology.selectedNode.value = null },
+            title = "Node " + topology.selectedNode.value?.id.toString(),
             onKeyEvent = {
                 if (it.type == KeyEventType.KeyDown && it.key.keyCode == Key.Escape.keyCode) {
-                    selectedNode = null
+                    topology.selectedNode.value = null
                 }
                 false
             }
@@ -209,7 +206,7 @@ fun TopologyComponent(
                         "Copy ID",
                         onClick = {
                             // copy to clipboard
-                            val text = selectedNode?.id ?: return@Item
+                            val text = topology.selectedNode.value?.id ?: return@Item
                             Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
                             println(text)
                         },
@@ -218,17 +215,17 @@ fun TopologyComponent(
                 }
             }
 
-            NodeDetailComponent(selectedNode ?: return@Window)
+            NodeDetailComponent(topology.selectedNode.value ?: return@Window)
         }
     }
 
-    if (selectedChannel != null) {
+    if (topology.selectedChannel.value != null) {
         Window(
-            onCloseRequest = { selectedChannel = null },
-            title = selectedChannel?.shortChannelId.toString(),
+            onCloseRequest = { topology.selectedChannel.value = null },
+            title = "Channel " + topology.selectedChannel.value?.shortChannelId.toString(),
             onKeyEvent = {
                 if (it.type == KeyEventType.KeyDown && it.key.keyCode == Key.Escape.keyCode) {
-                    selectedChannel = null
+                    topology.selectedChannel.value = null
                 }
                 false
             }
@@ -240,7 +237,7 @@ fun TopologyComponent(
                         "Copy ID",
                         onClick = {
                             // copy to clipboard
-                            val text = selectedChannel?.shortChannelId ?: return@Item
+                            val text = topology.selectedChannel.value?.shortChannelId ?: return@Item
                             Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
                             println(text)
                         },
@@ -249,7 +246,7 @@ fun TopologyComponent(
                 }
             }
 
-            ChannelDetailComponent(selectedChannel ?: return@Window)
+            ChannelDetailComponent(topology.selectedChannel.value ?: return@Window)
         }
     }
 }
