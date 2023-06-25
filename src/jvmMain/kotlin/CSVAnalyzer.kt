@@ -28,6 +28,8 @@ abstract class CSVAnalyzer {
     private var logFile: File? = null
     private var maxLine: Long? = null
     private var lineCount = 0
+    var progress = mutableStateOf(0f)
+    var readingLine = mutableStateOf("")
 
 
     fun analyze(
@@ -73,7 +75,7 @@ abstract class CSVAnalyzer {
 }
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterialApi::class)
 fun <T> CSVAnalyzerWindow(
     windowTitle: String,
     analyzer: CSVAnalyzer,
@@ -86,9 +88,8 @@ fun <T> CSVAnalyzerWindow(
     findByText: (searchText: String) -> T?,
     fetchLatestDetail: (selectedItem: T) -> T?,
     clipboardText: (selectedItem: T?) -> String?,
+    onWindowInitialized: (analyzer: CSVAnalyzer) -> Unit,
 ) {
-    var progress by remember { mutableStateOf(0f) }
-    var readingLine by remember { mutableStateOf("") }
     DropFileWindow(
         onCloseRequest = { exitProcess(0) },
         title = windowTitle,
@@ -109,8 +110,8 @@ fun <T> CSVAnalyzerWindow(
                 analyzer.analyze(
                     it,
                     progress = { r, p ->
-                        progress = p
-                        readingLine = r ?: ""
+                        analyzer.progress.value = p
+                        analyzer.readingLine.value = r ?: ""
                     }
                 )
             } catch (e: Exception) {
@@ -121,6 +122,7 @@ fun <T> CSVAnalyzerWindow(
             when (analyzer.state.value) {
                 AnalyzerWindowState.Initialized -> {
                     Text(dropFileMsg, modifier = Modifier.fillMaxSize(), textAlign = TextAlign.Center)
+                    onWindowInitialized(analyzer)
                 }
 
                 AnalyzerWindowState.Analyzing -> {
@@ -130,8 +132,8 @@ fun <T> CSVAnalyzerWindow(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                     ) {
-                        LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth().padding(20.dp))
-                        Text(readingLine)
+                        LinearProgressIndicator(progress = analyzer.progress.value, modifier = Modifier.fillMaxWidth().padding(20.dp))
+                        Text(analyzer.readingLine.value)
                     }
                 }
 

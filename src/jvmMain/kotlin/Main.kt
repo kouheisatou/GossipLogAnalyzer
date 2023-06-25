@@ -8,6 +8,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import edu.uci.ics.jung.layout.algorithms.StaticLayoutAlgorithm
 import java.awt.Dimension
+import java.io.File
 
 
 val channelAnalyzer = ChannelAnalyzer()
@@ -72,6 +73,15 @@ fun main() = application {
             },
             clipboardText = {
                 it?.id
+            },
+            onWindowInitialized = {
+                val sampleLogFile = File("sample_channel_announcement_log.csv")
+                if (sampleLogFile.exists()) {
+                    it.analyze(sampleLogFile) { readingLine, progress ->
+                        it.progress.value = progress
+                        it.readingLine.value = readingLine ?: ""
+                    }
+                }
             }
         )
     }
@@ -109,6 +119,15 @@ fun main() = application {
         },
         clipboardText = {
             it?.shortChannelId
+        },
+        onWindowInitialized = {
+            val sampleLogFile = File("sample_channel_update_log.csv")
+            if (sampleLogFile.exists()) {
+                it.analyze(sampleLogFile) { readingLine, progress ->
+                    it.progress.value = progress
+                    it.readingLine.value = readingLine ?: ""
+                }
+            }
         }
     )
 }

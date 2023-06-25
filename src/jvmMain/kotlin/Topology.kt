@@ -11,6 +11,7 @@ import com.google.common.graph.NetworkBuilder
 import edu.uci.ics.jung.graph.util.Graphs
 import edu.uci.ics.jung.layout.algorithms.LayoutAlgorithm
 import edu.uci.ics.jung.visualization.BaseVisualizationModel
+import edu.uci.ics.jung.visualization.MultiLayerTransformer
 import edu.uci.ics.jung.visualization.VisualizationViewer
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse
@@ -129,64 +130,114 @@ fun TopologyComponent(
     topology: Topology,
     modifier: Modifier = Modifier
 ) {
+    val viewer = VisualizationViewer(
+        topology.model,
+        topology.graphSize,
+    ).apply {
+
+        // mouse control
+        graphMouse = DefaultModalGraphMouse<Node, Channel>().apply {
+            setMode(ModalGraphMouse.Mode.PICKING)
+        }
+
+        // on node clicked
+        pickedNodeState.addItemListener {
+            if (it.item == null) return@addItemListener
+
+            topology.selectedNode.value = it.item as Node
+        }
+
+        // on edge clicked
+        pickedEdgeState.addItemListener {
+            if (it.item == null) return@addItemListener
+
+            topology.selectedChannel.value = (it.item as Edge).channel
+        }
+
+        // edge stroke width
+        renderContext.setEdgeStrokeFunction {
+            BasicStroke(topology.maxStrokeWidth.toFloat() * it.capacity / topology.maxEdgeCapacity)
+        }
+
+        // root node color
+        renderContext.setNodeFillPaintFunction {
+            return@setNodeFillPaintFunction when (it) {
+                topology.selectedNode.value -> Color.RED
+                topology.rootNode -> Color.CYAN
+                else -> Color.WHITE
+            }
+        }
+
+        // change edge color on selected
+        renderContext.setEdgeDrawPaintFunction {
+            return@setEdgeDrawPaintFunction when (it.channel) {
+                topology.selectedChannel.value -> Color.RED
+                else -> Color.BLACK
+            }
+        }
+
+        // node info popup
+        setNodeToolTipFunction {
+            if (topology.rootNode != null) {
+                println("(${model.layoutModel.get(topology.rootNode).x}, ${model.layoutModel.get(topology.rootNode).y})")
+
+                val targetPoint = Point2D.Double(
+                    model.layoutModel.get(topology.rootNode).x,
+                    model.layoutModel.get(topology.rootNode).y
+                )
+                renderContext
+                    .multiLayerTransformer
+                    .getTransformer(MultiLayerTransformer.Layer.VIEW)
+                    .setToIdentity()
+                renderContext
+                    .multiLayerTransformer
+                    .getTransformer(MultiLayerTransformer.Layer.VIEW)
+                    .translate(
+                        targetPoint.x * -1 + size.width.toDouble() / 2,
+                        targetPoint.y * -1 + size.height.toDouble() / 2
+                    )
+            }
+
+            it?.id.toString()
+        }
+
+        // edge info popup
+        setEdgeToolTipFunction {
+            it?.channel?.shortChannelId.toString()
+        }
+    }
+
+    LaunchedEffect(topology) {
+
+        viewer.renderContext
+            .multiLayerTransformer
+            .getTransformer(MultiLayerTransformer.Layer.VIEW)
+            .setToIdentity()
+        if (topology.rootNode != null) {
+            println("(${viewer.model.layoutModel.get(topology.rootNode).x}, ${viewer.model.layoutModel.get(topology.rootNode).y})")
+
+            val targetPoint = Point2D.Double(
+                viewer.model.layoutModel.get(topology.rootNode).x,
+                viewer.model.layoutModel.get(topology.rootNode).y
+            )
+            viewer.renderContext
+                .multiLayerTransformer
+                .getTransformer(MultiLayerTransformer.Layer.VIEW)
+                .translate(
+                    targetPoint.x * -1 + viewer.size.width.toDouble() / 2,
+                    targetPoint.y * -1 + viewer.size.height.toDouble() / 2
+                )
+        } else {
+            viewer.renderContext
+                .multiLayerTransformer
+                .getTransformer(MultiLayerTransformer.Layer.VIEW)
+                .translate(viewer.size.width.toDouble() / -2, viewer.size.height.toDouble() / -2)
+        }
+    }
 
     SwingPanel(
         modifier = modifier.fillMaxSize(),
-        factory = {
-            VisualizationViewer(
-                topology.model,
-                topology.graphSize,
-            ).apply {
-
-                // mouse control
-                graphMouse = DefaultModalGraphMouse<Node, Channel>().apply {
-                    setMode(ModalGraphMouse.Mode.PICKING)
-                }
-
-                // on node clicked
-                pickedNodeState.addItemListener {
-                    topology.selectedNode.value = it.item as Node
-                }
-
-                // on edge clicked
-                pickedEdgeState.addItemListener {
-                    topology.selectedChannel.value = (it.item as Edge).channel
-                }
-
-                // edge stroke width
-                renderContext.setEdgeStrokeFunction {
-                    BasicStroke(topology.maxStrokeWidth.toFloat() * it.capacity / topology.maxEdgeCapacity)
-                }
-
-                // root node color
-                renderContext.setNodeFillPaintFunction {
-                    return@setNodeFillPaintFunction when (it) {
-                        topology.selectedNode.value -> Color.RED
-                        topology.rootNode -> Color.CYAN
-                        else -> Color.WHITE
-                    }
-                }
-
-                // change edge color on selected
-                renderContext.setEdgeDrawPaintFunction {
-                    return@setEdgeDrawPaintFunction when (it.channel) {
-                        topology.selectedChannel.value -> Color.RED
-                        else -> Color.BLACK
-                    }
-                }
-
-                // node info popup
-                setNodeToolTipFunction {
-                    it?.id.toString()
-                }
-
-                // edge info popup
-                setEdgeToolTipFunction {
-                    it?.channel?.shortChannelId.toString()
-                }
-            }
-        },
-        update = {}
+        factory = { viewer },
     )
 
     if (topology.selectedNode.value != null) {
