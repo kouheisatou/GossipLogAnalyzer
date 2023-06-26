@@ -118,6 +118,7 @@ fun <T> CSVAnalyzerWindow(
                 )
             } catch (e: Exception) {
                 analyzer.errorMsg.value = e.message
+                analyzer.state.value = AnalyzerWindowState.Initialized
             }
         },
         content = {
