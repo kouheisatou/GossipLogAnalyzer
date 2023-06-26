@@ -33,7 +33,7 @@ class ChannelAnalyzer : CSVAnalyzer() {
             csvElements[6],
             csvElements[7].toLong(),
             csvElements[8].toLong(),
-            csvElements[9].toFloat(),
+            csvElements[9].toLong(),
             csvElements[10].toLong(),
         )
         channels.add(channelUpdate)

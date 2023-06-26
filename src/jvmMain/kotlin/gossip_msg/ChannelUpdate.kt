@@ -10,6 +10,6 @@ data class ChannelUpdate(
     val timeLockDelta: String,
     val htlcMinimumMsat: Long,
     val baseFee: Long,
-    val feeRate: Float,
+    val feeRate: Long,
     val htlcMaximumMsat: Long,
 )
