@@ -41,4 +41,9 @@ class NodeAnalyzer : CSVAnalyzer() {
             null
         }
     }
+
+    override fun reset() {
+        nodes.reset()
+        nodeListForDisplay.value = null
+    }
 }

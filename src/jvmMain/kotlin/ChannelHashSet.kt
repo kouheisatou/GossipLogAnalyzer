@@ -55,4 +55,10 @@ class ChannelHashSet {
         }
         return result.sortedByDescending { it.channelUpdates.size }
     }
+
+    fun reset() {
+        for (i in hashMap.indices) {
+            hashMap[i] = null
+        }
+    }
 }

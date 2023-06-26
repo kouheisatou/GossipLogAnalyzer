@@ -2,7 +2,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,7 +31,7 @@ abstract class CSVAnalyzer {
     var readingLine = mutableStateOf("")
 
 
-    fun analyze(
+    fun load(
         logFile: File,
         progress: (readingLine: String?, progress: Float) -> Unit
     ) {
@@ -72,6 +71,8 @@ abstract class CSVAnalyzer {
     open fun onLogFileLoaded(logFile: File): String? {
         return null
     }
+
+    abstract fun reset();
 }
 
 @Composable
@@ -107,7 +108,8 @@ fun <T> CSVAnalyzerWindow(
             }
 
             try {
-                analyzer.analyze(
+                analyzer.reset()
+                analyzer.load(
                     it,
                     progress = { r, p ->
                         analyzer.progress.value = p
@@ -132,7 +134,10 @@ fun <T> CSVAnalyzerWindow(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                     ) {
-                        LinearProgressIndicator(progress = analyzer.progress.value, modifier = Modifier.fillMaxWidth().padding(20.dp))
+                        LinearProgressIndicator(
+                            progress = analyzer.progress.value,
+                            modifier = Modifier.fillMaxWidth().padding(20.dp)
+                        )
                         Text(analyzer.readingLine.value)
                     }
                 }

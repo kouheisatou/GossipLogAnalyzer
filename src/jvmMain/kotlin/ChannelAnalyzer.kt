@@ -54,4 +54,9 @@ class ChannelAnalyzer : CSVAnalyzer() {
             null
         }
     }
+
+    override fun reset() {
+        channels.reset()
+        channelsForDisplay.value = null
+    }
 }

@@ -79,4 +79,10 @@ class NodeHashSet {
         }
         return result.sortedByDescending { it.channels.size }
     }
+
+    fun reset() {
+        for (i in hashMap.indices) {
+            hashMap[i] = null
+        }
+    }
 }

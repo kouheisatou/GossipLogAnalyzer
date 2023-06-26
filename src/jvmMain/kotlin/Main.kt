@@ -77,7 +77,7 @@ fun main() = application {
             onWindowInitialized = {
                 val sampleLogFile = File("sample_channel_announcement_log.csv")
                 if (sampleLogFile.exists()) {
-                    it.analyze(sampleLogFile) { readingLine, progress ->
+                    it.load(sampleLogFile) { readingLine, progress ->
                         it.progress.value = progress
                         it.readingLine.value = readingLine ?: ""
                     }
@@ -123,7 +123,7 @@ fun main() = application {
         onWindowInitialized = {
             val sampleLogFile = File("sample_channel_update_log.csv")
             if (sampleLogFile.exists()) {
-                it.analyze(sampleLogFile) { readingLine, progress ->
+                it.load(sampleLogFile) { readingLine, progress ->
                     it.progress.value = progress
                     it.readingLine.value = readingLine ?: ""
                 }
