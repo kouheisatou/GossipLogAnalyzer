@@ -11,15 +11,15 @@ import java.awt.Dimension
 import java.io.File
 
 
-val channelAnalyzer = ChannelAnalyzer()
-val nodeAnalyzer = NodeAnalyzer()
+val channelUpdateAnalyzer = ChannelUpdateAnalyzer()
+val channelAnnouncementAnalyzer = ChannelAnnouncementAnalyzer()
 
 val channels = ChannelHashSet()
 val nodes = NodeHashSet()
 
 fun main() = application {
 
-    if (channelAnalyzer.state.value == AnalyzerWindowState.Analyzed && nodeAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
+    if (channelUpdateAnalyzer.state.value == AnalyzerWindowState.Analyzed && channelAnnouncementAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
         Window(
             onCloseRequest = {},
             title = "topology"
@@ -38,13 +38,13 @@ fun main() = application {
         }
     }
 
-    if (channelAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
+    if (channelUpdateAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
 
         CSVAnalyzerWindow(
             "NodeList",
-            nodeAnalyzer,
+            channelAnnouncementAnalyzer,
             "Drop channel_announcement log file here!",
-            nodeAnalyzer.nodeListForDisplay.value ?: listOf(),
+            channelAnnouncementAnalyzer.nodeListForDisplay.value ?: listOf(),
             detailWindowTitle = { "Node ${it?.id}" },
             detailWindowLayout = {
                 if (it != null) {
@@ -88,9 +88,9 @@ fun main() = application {
 
     CSVAnalyzerWindow(
         "ChannelList",
-        channelAnalyzer,
+        channelUpdateAnalyzer,
         "Drop channel_update log file here!",
-        listData = channelAnalyzer.channelsForDisplay.value ?: listOf(),
+        listData = channelUpdateAnalyzer.channelsForDisplay.value ?: listOf(),
         detailWindowTitle = { "Channel ${it?.shortChannelId}" },
         detailWindowLayout = { selected ->
             if (selected != null) {
