@@ -44,35 +44,39 @@ fun main() = application {
             "NodeList",
             channelAnnouncementAnalyzer,
             "Drop channel_announcement log file here!",
-            channelAnnouncementAnalyzer.nodeListForDisplay.value ?: listOf(),
-            detailWindowTitle = { "Node ${it?.id}" },
-            detailWindowLayout = {
-                if (it != null) {
-                    NodeDetailComponent(it)
-                }
-            },
-            listTopRowLayout = {
-                Row {
-                    Text("NodeID")
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text("Channels")
-                }
-            },
-            listItemLayout = { node: Node ->
-                Row {
-                    Text(node.id)
-                    Spacer(modifier = Modifier.weight(1f))
-                    Text(node.channels.size.toString())
-                }
-            },
-            fetchLatestDetail = {
-                nodes[it.id]
-            },
-            findByText = {
-                nodes[it]
-            },
-            clipboardText = {
-                it?.id
+            layoutOnAnalyzeCompleted = {
+                SelectableListComponent(
+                    channelAnnouncementAnalyzer.nodeListForDisplay.value ?: listOf(),
+                    detailWindowTitle = { "Node ${it?.id}" },
+                    detailWindowLayout = {
+                        if (it != null) {
+                            NodeDetailComponent(it)
+                        }
+                    },
+                    listTopRowLayout = {
+                        Row {
+                            Text("NodeID")
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text("Channels")
+                        }
+                    },
+                    listItemLayout = { node: Node ->
+                        Row {
+                            Text(node.id)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(node.channels.size.toString())
+                        }
+                    },
+                    fetchLatestDetail = {
+                        nodes[it.id]
+                    },
+                    findByText = {
+                        nodes[it]
+                    },
+                    clipboardText = {
+                        it.id
+                    },
+                )
             },
             onWindowInitialized = {
                 val sampleLogFile = File("sample_channel_announcement_log.csv")
@@ -85,40 +89,43 @@ fun main() = application {
             }
         )
     }
-
     CSVAnalyzerWindow(
         "ChannelList",
         channelUpdateAnalyzer,
         "Drop channel_update log file here!",
-        listData = channelUpdateAnalyzer.channelsForDisplay.value ?: listOf(),
-        detailWindowTitle = { "Channel ${it?.shortChannelId}" },
-        detailWindowLayout = { selected ->
-            if (selected != null) {
-                ChannelDetailComponent(selected)
-            }
-        },
-        listTopRowLayout = {
-            Row {
-                Text("ChannelID")
-                Spacer(modifier = Modifier.weight(1f))
-                Text("Updates")
-            }
-        },
-        listItemLayout = { channel: Channel ->
-            Row {
-                Text(channel.shortChannelId)
-                Spacer(modifier = Modifier.weight(1f))
-                Text(channel.channelUpdates.size.toString())
-            }
-        },
-        fetchLatestDetail = {
-            channels[it.shortChannelId]
-        },
-        findByText = {
-            channels[it]
-        },
-        clipboardText = {
-            it?.shortChannelId
+        layoutOnAnalyzeCompleted = {
+            SelectableListComponent(
+                listDataForDisplay = channelUpdateAnalyzer.channelsForDisplay.value ?: listOf(),
+                detailWindowTitle = { "Channel ${it?.shortChannelId}" },
+                detailWindowLayout = { selected ->
+                    if (selected != null) {
+                        ChannelDetailComponent(selected)
+                    }
+                },
+                listTopRowLayout = {
+                    Row {
+                        Text("ChannelID")
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text("Updates")
+                    }
+                },
+                listItemLayout = { channel: Channel ->
+                    Row {
+                        Text(channel.shortChannelId)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(channel.channelUpdates.size.toString())
+                    }
+                },
+                fetchLatestDetail = {
+                    channels[it.shortChannelId]
+                },
+                findByText = {
+                    channels[it]
+                },
+                clipboardText = {
+                    it.shortChannelId
+                },
+            )
         },
         onWindowInitialized = {
             val sampleLogFile = File("sample_channel_update_log.csv")

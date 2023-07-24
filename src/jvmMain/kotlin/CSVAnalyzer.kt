@@ -77,18 +77,11 @@ abstract class CSVAnalyzer {
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
-fun <T> CSVAnalyzerWindow(
+fun CSVAnalyzerWindow(
     windowTitle: String,
     analyzer: CSVAnalyzer,
     dropFileMsg: String,
-    listData: List<T>,
-    detailWindowTitle: (selectedItem: T?) -> String,
-    detailWindowLayout: @Composable FrameWindowScope.(selectedItem: T?) -> Unit,
-    listTopRowLayout: @Composable () -> Unit,
-    listItemLayout: @Composable (listItem: T) -> Unit,
-    findByText: (searchText: String) -> T?,
-    fetchLatestDetail: (selectedItem: T) -> T?,
-    clipboardText: (selectedItem: T?) -> String?,
+    layoutOnAnalyzeCompleted: @Composable () -> Unit,
     onWindowInitialized: (analyzer: CSVAnalyzer) -> Unit,
 ) {
     DropFileWindow(
@@ -144,16 +137,7 @@ fun <T> CSVAnalyzerWindow(
                 }
 
                 AnalyzerWindowState.Analyzed -> {
-                    SelectableListComponent(
-                        listData,
-                        detailWindowTitle,
-                        detailWindowLayout,
-                        listItemLayout,
-                        listTopRowLayout = { listTopRowLayout() },
-                        fetchLatestDetail = fetchLatestDetail,
-                        clipboardText = clipboardText,
-                        findByText = findByText
-                    )
+                    layoutOnAnalyzeCompleted()
                 }
             }
 
