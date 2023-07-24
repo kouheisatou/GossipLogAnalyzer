@@ -2,7 +2,7 @@ import androidx.compose.runtime.*
 import gossip_msg.ChannelAnnouncement
 import java.io.File
 
-class NodeAnalyzer : CSVAnalyzer() {
+class ChannelAnnouncementAnalyzer : CSVAnalyzer() {
 
     var nodeListForDisplay = mutableStateOf<List<Node>?>(null)
 
@@ -59,7 +59,7 @@ class NodeAnalyzer : CSVAnalyzer() {
     }
 
     override fun onLogFileLoaded(logFile: File): String? {
-        return if (channelAnalyzer.state.value != AnalyzerWindowState.Analyzed) {
+        return if (channelUpdateAnalyzer.state.value != AnalyzerWindowState.Analyzed) {
             "Analyze channel_update log first."
         } else if (!logFile.name.startsWith("channel_announcement")) {
             "This file is not a channel_announcement log."

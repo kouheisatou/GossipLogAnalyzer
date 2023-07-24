@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-class ChannelAnalyzer : CSVAnalyzer() {
+class ChannelUpdateAnalyzer : CSVAnalyzer() {
 
     // for displaying channel list on compose window
     var channelsForDisplay = mutableStateOf<List<Channel>?>(null)
