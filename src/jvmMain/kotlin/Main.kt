@@ -1,5 +1,6 @@
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -78,13 +79,13 @@ fun main() = application {
             )
         },
         onWindowInitialized = {
-            val sampleLogFile = File("sample_channel_announcement_log.csv")
+            /*val sampleLogFile = File("channel_announcement_log_sample.csv")
             if (sampleLogFile.exists()) {
                 it.load(sampleLogFile) { readingLine, progress ->
                     it.progress.value = progress
                     it.readingLine.value = readingLine ?: ""
                 }
-            }
+            }*/
         }
     )
 
@@ -128,13 +129,13 @@ fun main() = application {
                 )
             },
             onWindowInitialized = {
-                val sampleLogFile = File("sample_channel_update_log.csv")
+                /*val sampleLogFile = File("channel_update_log_sample.csv")
                 if (sampleLogFile.exists()) {
                     it.load(sampleLogFile) { readingLine, progress ->
                         it.progress.value = progress
                         it.readingLine.value = readingLine ?: ""
                     }
-                }
+                }*/
             }
         )
     }

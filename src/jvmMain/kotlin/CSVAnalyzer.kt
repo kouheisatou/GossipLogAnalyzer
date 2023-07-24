@@ -5,7 +5,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.FrameWindowScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,8 +70,6 @@ abstract class CSVAnalyzer {
     open fun onLogFileLoaded(logFile: File): String? {
         return null
     }
-
-    abstract fun reset();
 }
 
 @Composable
@@ -87,7 +84,9 @@ fun CSVAnalyzerWindow(
     DropFileWindow(
         onCloseRequest = { exitProcess(0) },
         title = windowTitle,
-        onDroppedFile = {
+        onFileDropped = {
+
+            if (analyzer.state.value != AnalyzerWindowState.Initialized) return@DropFileWindow
 
             if (!it.path.endsWith(".csv")) {
                 analyzer.errorMsg.value = "File extension is not CSV."
@@ -101,7 +100,6 @@ fun CSVAnalyzerWindow(
             }
 
             try {
-                analyzer.reset()
                 analyzer.load(
                     it,
                     progress = { r, p ->

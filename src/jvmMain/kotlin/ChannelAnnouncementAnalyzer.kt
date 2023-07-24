@@ -42,17 +42,10 @@ class ChannelAnnouncementAnalyzer : CSVAnalyzer() {
     }
 
     override fun onLogFileLoaded(logFile: File): String? {
-        return if (channelUpdateAnalyzer.state.value != AnalyzerWindowState.Analyzed) {
-            "Analyze channel_update log first."
-        } else if (!logFile.name.startsWith("channel_announcement")) {
+        return if (!logFile.name.startsWith("channel_announcement")) {
             "This file is not a channel_announcement log."
         } else {
             null
         }
-    }
-
-    override fun reset() {
-        nodes.clear()
-        nodeListForDisplay.value = null
     }
 }

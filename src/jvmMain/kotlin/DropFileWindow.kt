@@ -12,7 +12,7 @@ import java.io.File
 fun DropFileWindow(
     onCloseRequest: () -> Unit,
     title: String,
-    onDroppedFile: (file: File) -> Unit,
+    onFileDropped: (file: File) -> Unit,
     content: @Composable FrameWindowScope.() -> Unit,
     onKeyEvent: (keyEvent: KeyEvent) -> Boolean = { false },
 ) {
@@ -26,7 +26,7 @@ fun DropFileWindow(
                     droppedFiles.first()?.let {
                         val file = File((it as File).absolutePath)
                         println(file.path)
-                        onDroppedFile(file)
+                        onFileDropped(file)
                     }
                 } catch (ex: Exception) {
                     ex.printStackTrace()
