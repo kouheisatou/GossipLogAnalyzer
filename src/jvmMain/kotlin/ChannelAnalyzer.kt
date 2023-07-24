@@ -23,10 +23,12 @@ class ChannelAnalyzer : CSVAnalyzer() {
             csvElements[3].toLong()
         }
 
+        val id = csvElements[2]
+
         val channelUpdate = ChannelUpdate(
             csvElements[0],
             csvElements[1],
-            csvElements[2],
+            id,
             timestamp,
             csvElements[4],
             csvElements[5],
@@ -36,15 +38,20 @@ class ChannelAnalyzer : CSVAnalyzer() {
             csvElements[9].toLong(),
             csvElements[10].toLong(),
         )
-        channels.add(channelUpdate)
-    }
 
-    fun getChannel(channel: Channel): Channel? {
-        return channels.findChannelById(channel.shortChannelId)
+        if (channels[id] != null) {
+            channels[id]!!.channelUpdates.add(channelUpdate)
+        } else {
+            channels[id] = Channel(id).apply { channelUpdates.add(channelUpdate) }
+        }
     }
 
     override fun onAnalyzingFinished() {
-        channelsForDisplay.value = channels.toList()
+        val list = mutableListOf<Channel>()
+        channels.toList().sortedByDescending { it.second.channelUpdates.size }.forEach {
+            list.add(it.second)
+        }
+        channelsForDisplay.value = list
     }
 
     override fun onLogFileLoaded(logFile: File): String? {
@@ -56,7 +63,7 @@ class ChannelAnalyzer : CSVAnalyzer() {
     }
 
     override fun reset() {
-        channels.reset()
+        channels.clear()
         channelsForDisplay.value = null
     }
 }

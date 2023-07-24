@@ -14,8 +14,8 @@ import java.io.File
 val channelAnalyzer = ChannelAnalyzer()
 val nodeAnalyzer = NodeAnalyzer()
 
-val channels = ChannelHashSet()
-val nodes = NodeHashSet()
+val channels = mutableMapOf<String, Channel>()
+val nodes = mutableMapOf<String, Node>()
 
 fun main() = application {
 
@@ -66,10 +66,10 @@ fun main() = application {
                 }
             },
             fetchLatestDetail = {
-                nodes.findByNodeId(it.id)
+                nodes[it.id]
             },
             findByText = {
-                nodes.findByNodeId(it)
+                nodes[it]
             },
             clipboardText = {
                 it?.id
@@ -112,10 +112,10 @@ fun main() = application {
             }
         },
         fetchLatestDetail = {
-            channels.findChannelById(it.shortChannelId)
+            channels[it.shortChannelId]
         },
         findByText = {
-            channels.findChannelById(it)
+            channels[it]
         },
         clipboardText = {
             it?.shortChannelId

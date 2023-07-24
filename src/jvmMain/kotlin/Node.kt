@@ -69,13 +69,13 @@ fun NodeDetailComponent(node: Node) {
             },
             listTitle = "Channels",
             fetchLatestDetail = {
-                channels.findChannelById(it.shortChannelId)
+                channels[it.shortChannelId]
             },
             clipboardText = {
                 it.shortChannelId
             },
             findByText = {
-                channels.findChannelById(it)
+                channels[it]
             }
         )
     }

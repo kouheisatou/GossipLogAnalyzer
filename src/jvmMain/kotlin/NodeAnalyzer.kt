@@ -23,13 +23,39 @@ class NodeAnalyzer : CSVAnalyzer() {
             csvElement[10],
         )
 
-        val channel = channels.findChannelById(channelAnnouncement.shortChannelId)
+        val channel = channels[channelAnnouncement.shortChannelId]
 
-        nodes.add(channelAnnouncement.nodeId1, channelAnnouncement.nodeId2, channel)
+        if (nodes[channelAnnouncement.nodeId1] != null && channel != null) {
+            nodes[channelAnnouncement.nodeId1]!!.channels.add(channel)
+            channel.node1 = nodes[channelAnnouncement.nodeId1]!!
+        } else {
+            nodes[channelAnnouncement.nodeId1] = Node(channelAnnouncement.nodeId1).apply {
+                if (channel != null) {
+                    channels.add(channel)
+                    channel.node1 = this
+                }
+            }
+        }
+
+        if (nodes[channelAnnouncement.nodeId2] != null && channel != null) {
+            nodes[channelAnnouncement.nodeId2]!!.channels.add(channel)
+            channel.node2 = nodes[channelAnnouncement.nodeId2]!!
+        } else {
+            nodes[channelAnnouncement.nodeId2] = Node(channelAnnouncement.nodeId2).apply {
+                if (channel != null) {
+                    channels.add(channel)
+                    channel.node2 = this
+                }
+            }
+        }
     }
 
     override fun onAnalyzingFinished() {
-        nodeListForDisplay.value = nodes.toList()
+        val list = mutableListOf<Node>()
+        nodes.toList().sortedByDescending { it.second.channels.size }.forEach {
+            list.add(it.second)
+        }
+        nodeListForDisplay.value = list
     }
 
     override fun onLogFileLoaded(logFile: File): String? {
@@ -43,7 +69,7 @@ class NodeAnalyzer : CSVAnalyzer() {
     }
 
     override fun reset() {
-        nodes.reset()
+        nodes.clear()
         nodeListForDisplay.value = null
     }
 }

@@ -16,9 +16,6 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer
 import org.jfree.data.xy.XYDataItem
 import org.jfree.data.xy.XYSeries
 import org.jfree.data.xy.XYSeriesCollection
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 class Channel(
     val shortChannelId: String,
@@ -93,7 +90,7 @@ fun ChannelDetailComponent(channel: Channel) {
                     Text(it?.id.toString())
                 },
                 fetchLatestDetail = {
-                    nodes.findByNodeId(it?.id)
+                    nodes[it?.id]
                 },
                 clipboardText = {
                     it?.id

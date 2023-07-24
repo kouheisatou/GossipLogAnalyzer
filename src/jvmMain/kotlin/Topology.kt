@@ -53,13 +53,13 @@ class Topology(
         graphSize: Dimension,
         maxStrokeWidth: Int,
         algorithm: LayoutAlgorithm<Node>,
-        channels: ChannelHashSet
+        channels: Map<String, Channel>
     ) : this(
         graphSize,
         maxStrokeWidth,
         algorithm
     ) {
-        for (channel in channels.toList()) {
+        for ((_, channel) in channels) {
             if (channel.node2 != null && channel.node1 != null) {
                 val edge1To2 = Edge(channel, Direction.Node1ToNode2)
                 val edge2To1 = Edge(channel, Direction.Node2ToNode1)
