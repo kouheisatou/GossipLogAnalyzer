@@ -10,13 +10,14 @@ import androidx.compose.ui.window.application
 import edu.uci.ics.jung.layout.algorithms.StaticLayoutAlgorithm
 import java.awt.Dimension
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 
 val channelUpdateAnalyzer = ChannelUpdateAnalyzer()
 val channelAnnouncementAnalyzer = ChannelAnnouncementAnalyzer()
 
-val channels = mutableMapOf<String, Channel>()
-val nodes = mutableMapOf<String, Node>()
+val channels = ConcurrentHashMap<String, Channel>()
+val nodes = ConcurrentHashMap<String, Node>()
 
 fun main() = application {
 

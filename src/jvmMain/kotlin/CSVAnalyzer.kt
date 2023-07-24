@@ -5,9 +5,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -24,7 +22,7 @@ abstract class CSVAnalyzer {
     val state = mutableStateOf(AnalyzerWindowState.Initialized)
     val errorMsg = mutableStateOf<String?>(null)
     private var logFile: File? = null
-    private var maxLine: Long? = null
+    private var maxLine: Int? = null
     private var lineCount = 0
     var progress = mutableStateOf(0f)
     var readingLine = mutableStateOf("")
@@ -35,14 +33,14 @@ abstract class CSVAnalyzer {
         progress: (readingLine: String?, progress: Float) -> Unit
     ) {
         lineCount = 0
-        this.logFile = logFile
-        this.maxLine = Files.lines(Paths.get(logFile.path)).count()
+        val lines = logFile.readLines()
+        this@CSVAnalyzer.logFile = logFile
+        this@CSVAnalyzer.maxLine = lines.size
         state.value = AnalyzerWindowState.Analyzing
 
         CoroutineScope(Dispatchers.Default).launch {
-            BufferedReader(FileReader(logFile)).use { br ->
-                var line: String?
-                while (br.readLine().also { line = it } != null) {
+            lines.map { line ->
+                async {
                     try {
                         analyzeCSVLine(line)
                     } catch (e: Exception) {
@@ -50,17 +48,17 @@ abstract class CSVAnalyzer {
                             e.printStackTrace()
                             errorMsg.value = e.message
                             state.value = AnalyzerWindowState.Initialized
-                            return@launch
+                            return@async
                         }
                     }
 
                     progress(line, lineCount.toFloat() / maxLine!!)
                     lineCount++
                 }
+            }.awaitAll()
 
-                onAnalyzingFinished()
-                state.value = AnalyzerWindowState.Analyzed
-            }
+            onAnalyzingFinished()
+            state.value = AnalyzerWindowState.Analyzed
         }
     }
 
