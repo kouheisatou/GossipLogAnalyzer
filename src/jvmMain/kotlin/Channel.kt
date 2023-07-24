@@ -19,9 +19,9 @@ import org.jfree.data.xy.XYSeriesCollection
 
 class Channel(
     val shortChannelId: String,
+    val node1: Node,
+    val node2: Node
 ) {
-    var node1: Node? = null
-    var node2: Node? = null
     val channelUpdates: MutableList<ChannelUpdate> = mutableListOf()
 
     override fun equals(other: Any?): Boolean {
@@ -33,7 +33,7 @@ class Channel(
     }
 
     override fun toString(): String {
-        return "Channel(shortChannelId='$shortChannelId', node1=${node1?.id}, node2=${node2?.id})"
+        return "Channel(shortChannelId='$shortChannelId', node1=${node1.id}, node2=${node2.id})"
     }
 
 }
@@ -87,13 +87,13 @@ fun ChannelDetailComponent(channel: Channel) {
                     }
                 },
                 listItemLayout = {
-                    Text(it?.id.toString())
+                    Text(it.id)
                 },
                 fetchLatestDetail = {
-                    nodes[it?.id]
+                    nodes[it.id]
                 },
                 clipboardText = {
-                    it?.id
+                    it.id
                 },
             )
 

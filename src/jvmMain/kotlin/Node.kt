@@ -1,14 +1,11 @@
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import edu.uci.ics.jung.layout.algorithms.FRLayoutAlgorithm
-import edu.uci.ics.jung.layout.algorithms.StaticLayoutAlgorithm
 import java.awt.Dimension
 
 class Node(val id: String) {
@@ -58,13 +55,12 @@ fun NodeDetailComponent(node: Node) {
                 }
             },
             listItemLayout = {
-                Column {
+                Row {
                     Text(it.shortChannelId)
-                    Row {
-                        Text(it.node1?.id.toString())
-                        Text(" - ", modifier = Modifier.weight(1f))
-                        Text(it.node2?.id.toString())
-                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(it.node1.id)
+                    Text(" - ")
+                    Text(it.node2.id)
                 }
             },
             listTitle = "Channels",

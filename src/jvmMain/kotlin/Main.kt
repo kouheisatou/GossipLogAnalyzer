@@ -38,48 +38,97 @@ fun main() = application {
         }
     }
 
-    if (channelUpdateAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
 
+    CSVAnalyzerWindow(
+        "NodeList",
+        channelAnnouncementAnalyzer,
+        "Drop channel_announcement log file here!",
+        layoutOnAnalyzeCompleted = {
+            SelectableListComponent(
+                channelAnnouncementAnalyzer.nodeListForDisplay.value ?: listOf(),
+                detailWindowTitle = { "Node ${it?.id}" },
+                detailWindowLayout = {
+                    if (it != null) {
+                        NodeDetailComponent(it)
+                    }
+                },
+                listTopRowLayout = {
+                    Row {
+                        Text("NodeID")
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text("Channels")
+                    }
+                },
+                listItemLayout = { node: Node ->
+                    Row {
+                        Text(node.id)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(node.channels.size.toString())
+                    }
+                },
+                fetchLatestDetail = {
+                    nodes[it.id]
+                },
+                findByText = {
+                    nodes[it]
+                },
+                clipboardText = {
+                    it.id
+                },
+            )
+        },
+        onWindowInitialized = {
+            val sampleLogFile = File("sample_channel_announcement_log.csv")
+            if (sampleLogFile.exists()) {
+                it.load(sampleLogFile) { readingLine, progress ->
+                    it.progress.value = progress
+                    it.readingLine.value = readingLine ?: ""
+                }
+            }
+        }
+    )
+
+    if (channelAnnouncementAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
         CSVAnalyzerWindow(
-            "NodeList",
-            channelAnnouncementAnalyzer,
-            "Drop channel_announcement log file here!",
+            "ChannelList",
+            channelUpdateAnalyzer,
+            "Drop channel_update log file here!",
             layoutOnAnalyzeCompleted = {
                 SelectableListComponent(
-                    channelAnnouncementAnalyzer.nodeListForDisplay.value ?: listOf(),
-                    detailWindowTitle = { "Node ${it?.id}" },
-                    detailWindowLayout = {
-                        if (it != null) {
-                            NodeDetailComponent(it)
+                    listDataForDisplay = channelUpdateAnalyzer.channelsForDisplay.value ?: listOf(),
+                    detailWindowTitle = { "Channel ${it?.shortChannelId}" },
+                    detailWindowLayout = { selected ->
+                        if (selected != null) {
+                            ChannelDetailComponent(selected)
                         }
                     },
                     listTopRowLayout = {
                         Row {
-                            Text("NodeID")
+                            Text("ChannelID")
                             Spacer(modifier = Modifier.weight(1f))
-                            Text("Channels")
+                            Text("Updates")
                         }
                     },
-                    listItemLayout = { node: Node ->
+                    listItemLayout = { channel: Channel ->
                         Row {
-                            Text(node.id)
+                            Text(channel.shortChannelId)
                             Spacer(modifier = Modifier.weight(1f))
-                            Text(node.channels.size.toString())
+                            Text(channel.channelUpdates.size.toString())
                         }
                     },
                     fetchLatestDetail = {
-                        nodes[it.id]
+                        channels[it.shortChannelId]
                     },
                     findByText = {
-                        nodes[it]
+                        channels[it]
                     },
                     clipboardText = {
-                        it.id
+                        it.shortChannelId
                     },
                 )
             },
             onWindowInitialized = {
-                val sampleLogFile = File("sample_channel_announcement_log.csv")
+                val sampleLogFile = File("sample_channel_update_log.csv")
                 if (sampleLogFile.exists()) {
                     it.load(sampleLogFile) { readingLine, progress ->
                         it.progress.value = progress
@@ -89,52 +138,4 @@ fun main() = application {
             }
         )
     }
-    CSVAnalyzerWindow(
-        "ChannelList",
-        channelUpdateAnalyzer,
-        "Drop channel_update log file here!",
-        layoutOnAnalyzeCompleted = {
-            SelectableListComponent(
-                listDataForDisplay = channelUpdateAnalyzer.channelsForDisplay.value ?: listOf(),
-                detailWindowTitle = { "Channel ${it?.shortChannelId}" },
-                detailWindowLayout = { selected ->
-                    if (selected != null) {
-                        ChannelDetailComponent(selected)
-                    }
-                },
-                listTopRowLayout = {
-                    Row {
-                        Text("ChannelID")
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text("Updates")
-                    }
-                },
-                listItemLayout = { channel: Channel ->
-                    Row {
-                        Text(channel.shortChannelId)
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(channel.channelUpdates.size.toString())
-                    }
-                },
-                fetchLatestDetail = {
-                    channels[it.shortChannelId]
-                },
-                findByText = {
-                    channels[it]
-                },
-                clipboardText = {
-                    it.shortChannelId
-                },
-            )
-        },
-        onWindowInitialized = {
-            val sampleLogFile = File("sample_channel_update_log.csv")
-            if (sampleLogFile.exists()) {
-                it.load(sampleLogFile) { readingLine, progress ->
-                    it.progress.value = progress
-                    it.readingLine.value = readingLine ?: ""
-                }
-            }
-        }
-    )
 }

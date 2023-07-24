@@ -39,11 +39,8 @@ class ChannelUpdateAnalyzer : CSVAnalyzer() {
             csvElements[10].toLong(),
         )
 
-        if (channels[id] != null) {
-            channels[id]!!.channelUpdates.add(channelUpdate)
-        } else {
-            channels[id] = Channel(id).apply { channelUpdates.add(channelUpdate) }
-        }
+        val channel = channels[channelUpdate.shortChannelId]
+        channel?.channelUpdates?.add(channelUpdate)
     }
 
     override fun onAnalyzingFinished() {

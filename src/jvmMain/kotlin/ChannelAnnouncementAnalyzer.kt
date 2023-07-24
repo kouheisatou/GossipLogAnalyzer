@@ -23,31 +23,14 @@ class ChannelAnnouncementAnalyzer : CSVAnalyzer() {
             csvElement[10],
         )
 
-        val channel = channels[channelAnnouncement.shortChannelId]
-
-        if (nodes[channelAnnouncement.nodeId1] != null && channel != null) {
-            nodes[channelAnnouncement.nodeId1]!!.channels.add(channel)
-            channel.node1 = nodes[channelAnnouncement.nodeId1]!!
-        } else {
-            nodes[channelAnnouncement.nodeId1] = Node(channelAnnouncement.nodeId1).apply {
-                if (channel != null) {
-                    channels.add(channel)
-                    channel.node1 = this
-                }
-            }
-        }
-
-        if (nodes[channelAnnouncement.nodeId2] != null && channel != null) {
-            nodes[channelAnnouncement.nodeId2]!!.channels.add(channel)
-            channel.node2 = nodes[channelAnnouncement.nodeId2]!!
-        } else {
-            nodes[channelAnnouncement.nodeId2] = Node(channelAnnouncement.nodeId2).apply {
-                if (channel != null) {
-                    channels.add(channel)
-                    channel.node2 = this
-                }
-            }
-        }
+        val node1 = nodes[channelAnnouncement.nodeId1] ?: Node(channelAnnouncement.nodeId1)
+        val node2 = nodes[channelAnnouncement.nodeId2] ?: Node(channelAnnouncement.nodeId2)
+        val channel = Channel(channelAnnouncement.shortChannelId, node1, node2)
+        node1.channels.add(channel)
+        node2.channels.add(channel)
+        nodes[channelAnnouncement.nodeId1] = node1
+        nodes[channelAnnouncement.nodeId2] = node2
+        channels[channelAnnouncement.shortChannelId] = channel
     }
 
     override fun onAnalyzingFinished() {
