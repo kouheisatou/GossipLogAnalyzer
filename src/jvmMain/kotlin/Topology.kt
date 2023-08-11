@@ -10,28 +10,29 @@ import com.google.common.graph.MutableNetwork
 import com.google.common.graph.NetworkBuilder
 import edu.uci.ics.jung.graph.util.Graphs
 import edu.uci.ics.jung.layout.algorithms.LayoutAlgorithm
+import edu.uci.ics.jung.layout.spatial.Circle
 import edu.uci.ics.jung.visualization.BaseVisualizationModel
 import edu.uci.ics.jung.visualization.MultiLayerTransformer
 import edu.uci.ics.jung.visualization.VisualizationViewer
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse
-import edu.uci.ics.jung.visualization.decorators.PickableNodePaintFunction
-import edu.uci.ics.jung.visualization.picking.MultiPickedState
-import edu.uci.ics.jung.visualization.picking.PickedState
 import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.Dimension
+import java.awt.FileDialog
+import java.awt.Menu
+import java.awt.MenuBar
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.awt.event.KeyEvent
-import java.awt.event.KeyListener
 import java.awt.geom.Point2D
+import java.awt.geom.Rectangle2D
 
 
 class Topology(
     val graphSize: Dimension,
     val maxStrokeWidth: Int,
     val algorithm: LayoutAlgorithm<Node>,
+    val nodes: Map<String, Node>,
 ) {
     val g: MutableNetwork<Node, Edge> = Graphs.synchronizedNetwork(
         NetworkBuilder
@@ -48,32 +49,34 @@ class Topology(
     var selectedNode = mutableStateOf<Node?>(null)
     var selectedChannel = mutableStateOf<Channel?>(null)
 
+    val estimatedDemand = estimateDemand(this.nodes)
+
     // overall graph
     constructor(
         graphSize: Dimension,
         maxStrokeWidth: Int,
         algorithm: LayoutAlgorithm<Node>,
-        channels: Map<String, Channel>
+        nodes: Map<String, Node>,
+        channels: Map<String, Channel>,
     ) : this(
         graphSize,
         maxStrokeWidth,
-        algorithm
+        algorithm,
+        nodes
     ) {
         for ((_, channel) in channels) {
-            if (channel.node2 != null && channel.node1 != null) {
-                val edge1To2 = Edge(channel, Direction.Node1ToNode2)
-                val edge2To1 = Edge(channel, Direction.Node2ToNode1)
+            val edge1To2 = Edge(channel, Direction.Node1ToNode2)
+            val edge2To1 = Edge(channel, Direction.Node2ToNode1)
 
-                if (edge1To2.capacity > maxEdgeCapacity) {
-                    maxEdgeCapacity = edge1To2.capacity
-                }
-                if (edge2To1.capacity > maxEdgeCapacity) {
-                    maxEdgeCapacity = edge2To1.capacity
-                }
-
-                if (edge1To2.capacity > 0) g.addEdge(edge1To2.sourceNode, edge1To2.destinationNode, edge1To2)
-                if (edge2To1.capacity > 0) g.addEdge(edge2To1.sourceNode, edge2To1.destinationNode, edge2To1)
+            if (edge1To2.capacity > maxEdgeCapacity) {
+                maxEdgeCapacity = edge1To2.capacity
             }
+            if (edge2To1.capacity > maxEdgeCapacity) {
+                maxEdgeCapacity = edge2To1.capacity
+            }
+
+            if (edge1To2.capacity > 0) g.addEdge(edge1To2.sourceNode, edge1To2.destinationNode, edge1To2)
+            if (edge2To1.capacity > 0) g.addEdge(edge2To1.sourceNode, edge2To1.destinationNode, edge2To1)
         }
     }
 
@@ -82,14 +85,15 @@ class Topology(
         graphSize: Dimension,
         maxStrokeWidth: Int,
         algorithm: LayoutAlgorithm<Node>,
-        node: Node,
+        nodes: Map<String, Node>,
+        rootNode: Node,
         maxDepth: Int
     ) : this(
         graphSize,
         maxStrokeWidth,
-        algorithm
+        algorithm,
+        nodes
     ) {
-        rootNode = node
 
         fun build(node: Node, depth: Int) {
 
@@ -111,16 +115,16 @@ class Topology(
                     if (edge1To2.capacity > 0) g.addEdge(edge1To2.sourceNode, edge1To2.destinationNode, edge1To2)
                     if (edge2To1.capacity > 0) g.addEdge(edge2To1.sourceNode, edge2To1.destinationNode, edge2To1)
 
-                    if (channel.node2 != node && channel.node2 != null) {
-                        build(channel.node2!!, depth + 1)
-                    } else if (channel.node1 != node && channel.node1 != null) {
-                        build(channel.node1!!, depth + 1)
+                    if (channel.node2 != node) {
+                        build(channel.node2, depth + 1)
+                    } else if (channel.node1 != node) {
+                        build(channel.node1, depth + 1)
                     }
                 }
             }
         }
 
-        build(node, 0)
+        build(rootNode, 0)
     }
 }
 
@@ -159,6 +163,17 @@ fun TopologyComponent(
             BasicStroke(topology.maxStrokeWidth.toFloat() * it.capacity / topology.maxEdgeCapacity)
         }
 
+        // node size
+        renderContext.setNodeShapeFunction {
+            Circle(edu.uci.ics.jung.layout.model.Point.of(0.0, 0.0), 0.2)
+            Rectangle2D.Float(
+                0f,
+                0f,
+                (topology.estimatedDemand[it]?.toFloat() ?: 0f) + 1f,
+                (topology.estimatedDemand[it]?.toFloat() ?: 0f) + 1f,
+            )
+        }
+
         // root node color
         renderContext.setNodeFillPaintFunction {
             return@setNodeFillPaintFunction when (it) {
@@ -178,26 +193,6 @@ fun TopologyComponent(
 
         // node info popup
         setNodeToolTipFunction {
-            if (topology.rootNode != null) {
-                println("(${model.layoutModel.get(topology.rootNode).x}, ${model.layoutModel.get(topology.rootNode).y})")
-
-                val targetPoint = Point2D.Double(
-                    model.layoutModel.get(topology.rootNode).x,
-                    model.layoutModel.get(topology.rootNode).y
-                )
-                renderContext
-                    .multiLayerTransformer
-                    .getTransformer(MultiLayerTransformer.Layer.VIEW)
-                    .setToIdentity()
-                renderContext
-                    .multiLayerTransformer
-                    .getTransformer(MultiLayerTransformer.Layer.VIEW)
-                    .translate(
-                        targetPoint.x * -1 + size.width.toDouble() / 2,
-                        targetPoint.y * -1 + size.height.toDouble() / 2
-                    )
-            }
-
             it?.id.toString()
         }
 

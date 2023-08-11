@@ -4,11 +4,17 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyShortcut
+import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import edu.uci.ics.jung.layout.algorithms.StaticLayoutAlgorithm
 import java.awt.Dimension
+import java.awt.FileDialog
 import java.io.File
 
 
@@ -18,6 +24,7 @@ val channelAnnouncementAnalyzer = ChannelAnnouncementAnalyzer()
 val channels = mutableMapOf<String, Channel>()
 val nodes = mutableMapOf<String, Node>()
 
+@OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
 
     if (channelUpdateAnalyzer.state.value == AnalyzerWindowState.Analyzed && channelAnnouncementAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
@@ -31,11 +38,43 @@ fun main() = application {
                         Dimension(19200, 10800),
                         30,
                         StaticLayoutAlgorithm(),
-                        channels
+                        nodes, channels,
                     )
                 )
             }
             TopologyComponent(topology)
+
+
+            var isFileDialogOpened by remember { mutableStateOf(false) }
+            if (isFileDialogOpened) {
+                FileDialog(
+                    mode = FileDialog.SAVE,
+                    file = "estimated_demands.csv",
+                    onCloseRequest = { directory, filename ->
+                        println("$directory/$filename")
+                        if (filename != null && directory != null) {
+                            val file = File(directory, filename).apply { this.writeText("node_id,demand\n") }
+
+                            topology.estimatedDemand.toList().sortedByDescending { it.second }.forEach {
+                                file.appendText("${it.first.id},${it.second}\n")
+                            }
+                        }
+                        isFileDialogOpened = false
+                    }
+                )
+            }
+
+            MenuBar {
+                Menu("file") {
+                    Item(
+                        "Save Estimated Demand to CSV",
+                        onClick = {
+                            isFileDialogOpened = true
+                        },
+                        shortcut = KeyShortcut(Key.S, meta = true)
+                    )
+                }
+            }
         }
     }
 

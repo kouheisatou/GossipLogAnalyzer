@@ -13,13 +13,13 @@ class Edge(val channel: Channel, private val direction: Direction) {
 
         when (direction) {
             Direction.Node1ToNode2 -> {
-                sourceNode = channel.node1!!
-                destinationNode = channel.node2!!
+                sourceNode = channel.node1
+                destinationNode = channel.node2
             }
 
             Direction.Node2ToNode1 -> {
-                sourceNode = channel.node2!!
-                destinationNode = channel.node1!!
+                sourceNode = channel.node2
+                destinationNode = channel.node1
             }
         }
 

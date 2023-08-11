@@ -45,7 +45,7 @@ fun ChannelDetailComponent(channel: Channel) {
         val node1ToNode2Series = XYSeries("node1 to node2", true)
         val node2ToNode1Series = XYSeries("node2 to node1", true)
         channel.channelUpdates.forEach {
-            if (it.channelFlags.endsWith("0")) {
+            if (it.direction == Direction.Node1ToNode2) {
                 node1ToNode2Series.add(XYDataItem(it.timestamp, it.htlcMaximumMsat))
             } else {
                 node2ToNode1Series.add(XYDataItem(it.timestamp, it.htlcMaximumMsat))
