@@ -1,3 +1,4 @@
+import analyzer.*
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material.Text
@@ -13,6 +14,13 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import edu.uci.ics.jung.layout.algorithms.StaticLayoutAlgorithm
+import network.Channel
+import network.ChannelDetailComponent
+import network.Node
+import network.NodeDetailComponent
+import ui.FileDialog
+import ui.MultipleFileLoadComponent
+import ui.SelectableListComponent
 import java.awt.Dimension
 import java.awt.FileDialog
 import java.io.File
@@ -20,12 +28,33 @@ import java.io.File
 
 val channelUpdateAnalyzer = ChannelUpdateAnalyzer()
 val channelAnnouncementAnalyzer = ChannelAnnouncementAnalyzer()
+val paymentsOutputAnalyzer = PaymentsOutputAnalyzer()
 
 val channels = mutableMapOf<String, Channel>()
 val nodes = mutableMapOf<String, Node>()
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
+
+    val files = mutableMapOf<String, File?>(
+        "payments_output.csv" to null,
+        "channels_output.csv" to null,
+        "edges_output.csv" to null,
+        "nodes_output.csv" to null
+    )
+    Window(onCloseRequest = {}, title = "file load test") {
+        MultipleFileLoadComponent(files)
+    }
+
+    CSVAnalyzerWindow(
+        windowTitle = "PaymentsOutputAnalyzer",
+        analyzer = paymentsOutputAnalyzer,
+        dropFileMsg = "Drop payments_output.csv here.",
+        layoutOnAnalyzeCompleted = {
+
+        },
+        onWindowInitialized = {},
+    )
 
     if (channelUpdateAnalyzer.state.value == AnalyzerWindowState.Analyzed && channelAnnouncementAnalyzer.state.value == AnalyzerWindowState.Analyzed) {
         Window(

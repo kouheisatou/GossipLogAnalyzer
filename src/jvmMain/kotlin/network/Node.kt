@@ -1,3 +1,8 @@
+package network
+
+import ui.SelectableListComponent
+import Topology
+import TopologyComponent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -5,7 +10,9 @@ import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import channels
 import edu.uci.ics.jung.layout.algorithms.FRLayoutAlgorithm
+import nodes
 import java.awt.Dimension
 
 class Node(val id: String) {

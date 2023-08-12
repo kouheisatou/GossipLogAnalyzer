@@ -16,12 +16,10 @@ import edu.uci.ics.jung.visualization.MultiLayerTransformer
 import edu.uci.ics.jung.visualization.VisualizationViewer
 import edu.uci.ics.jung.visualization.control.DefaultModalGraphMouse
 import edu.uci.ics.jung.visualization.control.ModalGraphMouse
+import network.*
 import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.Dimension
-import java.awt.FileDialog
-import java.awt.Menu
-import java.awt.MenuBar
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.geom.Point2D

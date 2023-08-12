@@ -1,6 +1,6 @@
 package gossip_msg
 
-import Direction
+import network.Direction
 import java.lang.Exception
 
 class ChannelUpdate(

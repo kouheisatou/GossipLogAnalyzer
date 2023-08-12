@@ -1,5 +1,11 @@
+package analyzer
+
+import network.Channel
+import network.Node
 import androidx.compose.runtime.*
+import channels
 import gossip_msg.ChannelAnnouncement
+import nodes
 import java.io.File
 
 class ChannelAnnouncementAnalyzer : CSVAnalyzer() {

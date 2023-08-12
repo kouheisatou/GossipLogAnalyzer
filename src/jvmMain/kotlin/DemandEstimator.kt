@@ -1,3 +1,6 @@
+import network.Direction
+import network.Node
+
 fun estimateDemand(nodes: Map<String, Node>): Map<Node, Int> {
     val result = mutableMapOf<Node, Int>()
 

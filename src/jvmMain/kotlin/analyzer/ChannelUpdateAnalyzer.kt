@@ -1,4 +1,9 @@
+package analyzer
+
+import network.Channel
 import androidx.compose.runtime.mutableStateOf
+import channelAnnouncementAnalyzer
+import channels
 import gossip_msg.ChannelUpdate
 import java.io.File
 import java.time.LocalDateTime

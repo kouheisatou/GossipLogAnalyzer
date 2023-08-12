@@ -1,3 +1,6 @@
+package analyzer
+
+import ui.DropFileWindow
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
