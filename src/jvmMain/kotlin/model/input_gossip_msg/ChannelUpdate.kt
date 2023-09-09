@@ -1,4 +1,4 @@
-package gossip_msg
+package model.gossip_msg
 
 import network.Direction
 import java.lang.Exception

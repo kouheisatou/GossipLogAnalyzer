@@ -1,4 +1,4 @@
-package gossip_msg
+package model.gossip_msg
 
 data class ChannelAnnouncement(
     val nodeSig1: String,

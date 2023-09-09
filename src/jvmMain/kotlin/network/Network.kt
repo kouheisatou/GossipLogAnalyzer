@@ -1,4 +1,4 @@
-package network
+package model.network
 
 class Network {
     val channels = mutableMapOf<String, Channel>()
