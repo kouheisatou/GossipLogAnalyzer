@@ -1,5 +1,15 @@
 import network.Direction
 import network.Node
+import java.io.File
+
+class DemandEstimator(
+    val paymentsOutputFile: File,
+    val channelsOutputFile: File,
+    val edgesOutputFile: File,
+    val nodesOutputFile: File
+){
+
+}
 
 fun estimateDemand(nodes: Map<String, Node>): Map<Node, Int> {
     val result = mutableMapOf<Node, Int>()

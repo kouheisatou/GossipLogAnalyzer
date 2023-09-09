@@ -1,13 +1,12 @@
 package analyzer
 
-import ui.DropFileWindow
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Window
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,7 +15,6 @@ import java.io.File
 import java.io.FileReader
 import java.nio.file.Files
 import java.nio.file.Paths
-import kotlin.system.exitProcess
 
 enum class AnalyzerWindowState {
     Initialized, Analyzing, Analyzed
@@ -35,7 +33,7 @@ abstract class CSVAnalyzer {
 
     fun load(
         logFile: File,
-        progress: (readingLine: String?, progress: Float) -> Unit
+        onLoadCompleted: () -> Unit,
     ) {
         lineCount = 0
         this.logFile = logFile
@@ -57,11 +55,13 @@ abstract class CSVAnalyzer {
                         }
                     }
 
-                    progress(line, lineCount.toFloat() / maxLine!!)
+                    readingLine.value = line ?: ""
+                    progress.value = lineCount.toFloat() / maxLine!!
                     lineCount++
                 }
 
                 onAnalyzingFinished()
+                onLoadCompleted()
                 state.value = AnalyzerWindowState.Analyzed
             }
         }
@@ -80,86 +80,55 @@ abstract class CSVAnalyzer {
 fun CSVAnalyzerWindow(
     windowTitle: String,
     analyzer: CSVAnalyzer,
-    dropFileMsg: String,
     layoutOnAnalyzeCompleted: @Composable () -> Unit,
-    onWindowInitialized: (analyzer: CSVAnalyzer) -> Unit,
 ) {
-    DropFileWindow(
-        onCloseRequest = { exitProcess(0) },
+    Window(
+        onCloseRequest = {},
         title = windowTitle,
-        onFileDropped = {
+    ) {
+        when (analyzer.state.value) {
 
-            if (analyzer.state.value != AnalyzerWindowState.Initialized) return@DropFileWindow
-
-            if (!it.path.endsWith(".csv")) {
-                analyzer.errorMsg.value = "File extension is not CSV."
-                return@DropFileWindow
+            AnalyzerWindowState.Initialized -> {
+                analyzer.state.value = AnalyzerWindowState.Analyzing
             }
 
-            val errorMsg = analyzer.onLogFileLoaded(it)
-            if (errorMsg != null) {
-                analyzer.errorMsg.value = errorMsg
-                return@DropFileWindow
-            }
+            AnalyzerWindowState.Analyzing -> {
 
-            try {
-                analyzer.load(
-                    it,
-                    progress = { r, p ->
-                        analyzer.progress.value = p
-                        analyzer.readingLine.value = r ?: ""
-                    }
-                )
-            } catch (e: Exception) {
-                analyzer.errorMsg.value = e.message
-                analyzer.state.value = AnalyzerWindowState.Initialized
-            }
-        },
-        content = {
-            when (analyzer.state.value) {
-                AnalyzerWindowState.Initialized -> {
-                    Text(dropFileMsg, modifier = Modifier.fillMaxSize(), textAlign = TextAlign.Center)
-                    onWindowInitialized(analyzer)
-                }
-
-                AnalyzerWindowState.Analyzing -> {
-
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        LinearProgressIndicator(
-                            progress = analyzer.progress.value,
-                            modifier = Modifier.fillMaxWidth().padding(20.dp)
-                        )
-                        Text(analyzer.readingLine.value)
-                    }
-                }
-
-                AnalyzerWindowState.Analyzed -> {
-                    layoutOnAnalyzeCompleted()
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    LinearProgressIndicator(
+                        progress = analyzer.progress.value,
+                        modifier = Modifier.fillMaxWidth().padding(20.dp)
+                    )
+                    Text(analyzer.readingLine.value)
                 }
             }
 
-            if (analyzer.errorMsg.value != null) {
-                AlertDialog(
-                    onDismissRequest = {
-                        analyzer.errorMsg.value = null
-                    },
-                    buttons = {
-                        TextButton(
-                            onClick = {
-                                analyzer.errorMsg.value = null
-                            }
-                        ) {
-                            Text("OK")
-                        }
-                    },
-                    title = { Text("error") },
-                    text = { Text(analyzer.errorMsg.value ?: "") }
-                )
+            AnalyzerWindowState.Analyzed -> {
+                layoutOnAnalyzeCompleted()
             }
         }
-    )
+
+        if (analyzer.errorMsg.value != null) {
+            AlertDialog(
+                onDismissRequest = {
+                    analyzer.errorMsg.value = null
+                },
+                buttons = {
+                    TextButton(
+                        onClick = {
+                            analyzer.errorMsg.value = null
+                        }
+                    ) {
+                        Text("OK")
+                    }
+                },
+                title = { Text("error") },
+                text = { Text(analyzer.errorMsg.value ?: "") }
+            )
+        }
+    }
 }
