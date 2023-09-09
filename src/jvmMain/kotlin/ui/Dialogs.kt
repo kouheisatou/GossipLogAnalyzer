@@ -7,7 +7,7 @@ import java.awt.Frame
 import java.io.FilenameFilter
 
 @Composable
-fun FileDialog(
+fun FilePicker(
     parent: Frame? = null,
     title: String = "Choose a file",
     mode: Int = FileDialog.LOAD,

@@ -30,7 +30,7 @@ class Topology(
     val graphSize: Dimension,
     val maxStrokeWidth: Int,
     val algorithm: LayoutAlgorithm<Node>,
-    val nodes: Map<String, Node>,
+    val network: Network
 ) {
     val g: MutableNetwork<Node, Edge> = Graphs.synchronizedNetwork(
         NetworkBuilder
@@ -47,22 +47,11 @@ class Topology(
     var selectedNode = mutableStateOf<Node?>(null)
     var selectedChannel = mutableStateOf<Channel?>(null)
 
-    val estimatedDemand = estimateDemand(this.nodes)
+    val estimatedDemand = estimateDemand(this.network.nodes)
 
-    // overall graph
-    constructor(
-        graphSize: Dimension,
-        maxStrokeWidth: Int,
-        algorithm: LayoutAlgorithm<Node>,
-        nodes: Map<String, Node>,
-        channels: Map<String, Channel>,
-    ) : this(
-        graphSize,
-        maxStrokeWidth,
-        algorithm,
-        nodes
-    ) {
-        for ((_, channel) in channels) {
+    init {
+
+        for ((_, channel) in network.channels) {
             val edge1To2 = Edge(channel, Direction.Node1ToNode2)
             val edge2To1 = Edge(channel, Direction.Node2ToNode1)
 
@@ -83,14 +72,14 @@ class Topology(
         graphSize: Dimension,
         maxStrokeWidth: Int,
         algorithm: LayoutAlgorithm<Node>,
-        nodes: Map<String, Node>,
+        network: Network,
         rootNode: Node,
         maxDepth: Int
     ) : this(
         graphSize,
         maxStrokeWidth,
         algorithm,
-        nodes
+        network
     ) {
 
         fun build(node: Node, depth: Int) {

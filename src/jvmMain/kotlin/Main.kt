@@ -17,11 +17,8 @@ import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import edu.uci.ics.jung.layout.algorithms.StaticLayoutAlgorithm
-import network.Channel
-import network.ChannelDetailComponent
-import network.Node
-import network.NodeDetailComponent
-import ui.FileDialog
+import network.*
+import ui.FilePicker
 import ui.MultipleFileLoadComponent
 import ui.SelectableListComponent
 import java.awt.Dimension
@@ -32,12 +29,13 @@ import java.io.FileOutputStream
 import java.util.Properties
 
 
-val channelUpdateAnalyzer = ChannelUpdateAnalyzer()
-val channelAnnouncementAnalyzer = ChannelAnnouncementAnalyzer()
-val paymentsOutputAnalyzer = PaymentsOutputAnalyzer()
+val estimatedNetwork = Network()
+val channelUpdateAnalyzer = ChannelUpdateAnalyzer(estimatedNetwork)
+val channelAnnouncementAnalyzer = ChannelAnnouncementAnalyzer(estimatedNetwork)
 
-val channels = mutableMapOf<String, Channel>()
-val nodes = mutableMapOf<String, Node>()
+val groundTruthNetwork = Network()
+val groundTruthAnalyzer = GroundTruthAnalyzer(groundTruthNetwork)
+
 
 val inputFilePathPropertyFile = File("input_files.properties")
 val inputFilePathProperty = Properties()
@@ -155,7 +153,7 @@ fun main() = application {
         MainWindowState.ChannelUpdateLogLoaded -> {
             Window(
                 onCloseRequest = {},
-                title = "topology"
+                title = "estimated topology"
             ) {
                 val topology by remember {
                     mutableStateOf(
@@ -163,7 +161,7 @@ fun main() = application {
                             Dimension(19200, 10800),
                             30,
                             StaticLayoutAlgorithm(),
-                            nodes, channels,
+                            estimatedNetwork,
                         )
                     )
                 }
@@ -172,7 +170,7 @@ fun main() = application {
 
                 var isFileDialogOpened by remember { mutableStateOf(false) }
                 if (isFileDialogOpened) {
-                    FileDialog(
+                    FilePicker(
                         mode = FileDialog.SAVE,
                         file = "estimated_demands.csv",
                         onCloseRequest = { directory, filename ->
@@ -208,7 +206,7 @@ fun main() = application {
 
     CSVAnalyzerWindow(
         windowTitle = "PaymentsOutputAnalyzer",
-        analyzer = paymentsOutputAnalyzer,
+        analyzer = groundTruthAnalyzer,
         layoutOnAnalyzeCompleted = {
 
         },
@@ -241,10 +239,10 @@ fun main() = application {
                     }
                 },
                 fetchLatestDetail = {
-                    nodes[it.id]
+                    estimatedNetwork.nodes[it.id]
                 },
                 findByText = {
-                    nodes[it]
+                    estimatedNetwork.nodes[it]
                 },
                 clipboardText = {
                     it.id
@@ -280,10 +278,10 @@ fun main() = application {
                     }
                 },
                 fetchLatestDetail = {
-                    channels[it.shortChannelId]
+                    estimatedNetwork.channels[it.shortChannelId]
                 },
                 findByText = {
-                    channels[it]
+                    estimatedNetwork.channels[it]
                 },
                 clipboardText = {
                     it.shortChannelId

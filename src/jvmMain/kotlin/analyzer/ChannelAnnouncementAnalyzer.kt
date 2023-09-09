@@ -3,12 +3,11 @@ package analyzer
 import network.Channel
 import network.Node
 import androidx.compose.runtime.*
-import channels
 import gossip_msg.ChannelAnnouncement
-import nodes
+import network.Network
 import java.io.File
 
-class ChannelAnnouncementAnalyzer : CSVAnalyzer() {
+class ChannelAnnouncementAnalyzer(private val estimatedNetwork: Network) : CSVAnalyzer() {
 
     var nodeListForDisplay = mutableStateOf<List<Node>?>(null)
 
@@ -29,19 +28,19 @@ class ChannelAnnouncementAnalyzer : CSVAnalyzer() {
             csvElement[10],
         )
 
-        val node1 = nodes[channelAnnouncement.nodeId1] ?: Node(channelAnnouncement.nodeId1)
-        val node2 = nodes[channelAnnouncement.nodeId2] ?: Node(channelAnnouncement.nodeId2)
-        val channel = Channel(channelAnnouncement.shortChannelId, node1, node2)
+        val node1 = estimatedNetwork.nodes[channelAnnouncement.nodeId1] ?: Node(channelAnnouncement.nodeId1, estimatedNetwork)
+        val node2 = estimatedNetwork.nodes[channelAnnouncement.nodeId2] ?: Node(channelAnnouncement.nodeId2, estimatedNetwork)
+        val channel = Channel(channelAnnouncement.shortChannelId, node1, node2, estimatedNetwork)
         node1.channels.add(channel)
         node2.channels.add(channel)
-        nodes[channelAnnouncement.nodeId1] = node1
-        nodes[channelAnnouncement.nodeId2] = node2
-        channels[channelAnnouncement.shortChannelId] = channel
+        estimatedNetwork.nodes[channelAnnouncement.nodeId1] = node1
+        estimatedNetwork.nodes[channelAnnouncement.nodeId2] = node2
+        estimatedNetwork.channels[channelAnnouncement.shortChannelId] = channel
     }
 
     override fun onAnalyzingFinished() {
         val list = mutableListOf<Node>()
-        nodes.toList().sortedByDescending { it.second.channels.size }.forEach {
+        estimatedNetwork.nodes.toList().sortedByDescending { it.second.channels.size }.forEach {
             list.add(it.second)
         }
         nodeListForDisplay.value = list

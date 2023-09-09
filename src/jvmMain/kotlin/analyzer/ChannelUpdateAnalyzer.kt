@@ -3,14 +3,14 @@ package analyzer
 import network.Channel
 import androidx.compose.runtime.mutableStateOf
 import channelAnnouncementAnalyzer
-import channels
 import gossip_msg.ChannelUpdate
+import network.Network
 import java.io.File
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-class ChannelUpdateAnalyzer : CSVAnalyzer() {
+class ChannelUpdateAnalyzer(private val estimatedNetwork: Network) : CSVAnalyzer() {
 
     // for displaying channel list on compose window
     var channelsForDisplay = mutableStateOf<List<Channel>?>(null)
@@ -44,13 +44,13 @@ class ChannelUpdateAnalyzer : CSVAnalyzer() {
             csvElements[10].toLong(),
         )
 
-        val channel = channels[channelUpdate.shortChannelId]
+        val channel = estimatedNetwork.channels[channelUpdate.shortChannelId]
         channel?.channelUpdates?.add(channelUpdate)
     }
 
     override fun onAnalyzingFinished() {
         val list = mutableListOf<Channel>()
-        channels.toList().sortedByDescending { it.second.channelUpdates.size }.forEach {
+        estimatedNetwork.channels.toList().sortedByDescending { it.second.channelUpdates.size }.forEach {
             list.add(it.second)
         }
         channelsForDisplay.value = list

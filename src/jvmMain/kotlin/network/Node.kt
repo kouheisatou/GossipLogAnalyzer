@@ -10,12 +10,10 @@ import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import channels
 import edu.uci.ics.jung.layout.algorithms.FRLayoutAlgorithm
-import nodes
 import java.awt.Dimension
 
-class Node(val id: String) {
+class Node(val id: String, val network: Network) {
     val channels = mutableSetOf<Channel>()
 
     override fun equals(other: Any?): Boolean {
@@ -44,7 +42,7 @@ fun NodeDetailComponent(node: Node) {
                 Dimension(1920, 1080),
                 5,
                 FRLayoutAlgorithm(),
-                nodes,
+                node.network,
                 node,
                 1
             ),
@@ -73,13 +71,13 @@ fun NodeDetailComponent(node: Node) {
             },
             listTitle = "Channels",
             fetchLatestDetail = {
-                channels[it.shortChannelId]
+                node.network.channels[it.shortChannelId]
             },
             clipboardText = {
                 it.shortChannelId
             },
             findByText = {
-                channels[it]
+                node.network.channels[it]
             }
         )
     }

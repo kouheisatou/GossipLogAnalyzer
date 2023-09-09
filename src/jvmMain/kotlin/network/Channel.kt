@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import gossip_msg.ChannelUpdate
-import nodes
 import org.jfree.chart.ChartFactory
 import org.jfree.chart.ChartPanel
 import org.jfree.chart.plot.XYPlot
@@ -24,7 +23,8 @@ import org.jfree.data.xy.XYSeriesCollection
 class Channel(
     val shortChannelId: String,
     val node1: Node,
-    val node2: Node
+    val node2: Node,
+    val network: Network
 ) {
     val channelUpdates: MutableList<ChannelUpdate> = mutableListOf()
 
@@ -94,7 +94,7 @@ fun ChannelDetailComponent(channel: Channel) {
                     Text(it.id)
                 },
                 fetchLatestDetail = {
-                    nodes[it.id]
+                    channel.network.nodes[it.id]
                 },
                 clipboardText = {
                     it.id

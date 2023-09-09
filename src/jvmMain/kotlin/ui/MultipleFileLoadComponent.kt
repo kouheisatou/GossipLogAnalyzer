@@ -34,13 +34,13 @@ fun MultipleFileLoadComponent(files: MutableMap<String, File?>, modifier: Modifi
     }
 
     if (selectedFile != null) {
-        FileDialog(
+        FilePicker(
             filenameFilter = { _, name -> name == selectedFile },
             title = "Choose $selectedFile"
         ) { directory, filename ->
             if (directory == null || filename == null || filename != selectedFile) {
                 selectedFile = null
-                return@FileDialog
+                return@FilePicker
             }
 
             files[selectedFile!!] = File(directory, filename)
