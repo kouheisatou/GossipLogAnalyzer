@@ -3,7 +3,7 @@ package analyzer
 import network.Channel
 import androidx.compose.runtime.mutableStateOf
 import channelAnnouncementAnalyzer
-import gossip_msg.ChannelUpdate
+import model.input_gossip_msg.ChannelUpdate
 import network.Network
 import java.io.File
 import java.time.LocalDateTime
@@ -15,10 +15,7 @@ class ChannelUpdateAnalyzer(private val estimatedNetwork: Network) : CSVAnalyzer
     // for displaying channel list on compose window
     var channelsForDisplay = mutableStateOf<List<Channel>?>(null)
 
-    override fun analyzeCSVLine(lineText: String?) {
-        if (lineText == null) return
-        val csvElements = lineText.split(",")
-
+    override fun analyzeCSVLine(csvElements: List<String>) {
         val timestamp = try {
             LocalDateTime.parse(
                 csvElements[3],

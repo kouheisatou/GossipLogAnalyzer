@@ -1,4 +1,4 @@
-package model.ground_truth
+package model.ground_truth_simulator_outputs
 
 data class PaymentOutput(
     val id: String,

@@ -34,31 +34,47 @@ val channelUpdateAnalyzer = ChannelUpdateAnalyzer(estimatedNetwork)
 val channelAnnouncementAnalyzer = ChannelAnnouncementAnalyzer(estimatedNetwork)
 
 val groundTruthNetwork = Network()
-val groundTruthAnalyzer = GroundTruthAnalyzer(groundTruthNetwork)
+val paymentsOutputAnalyzer = PaymentOutputAnalyzer(groundTruthNetwork)
+val nodesOutputAnalyzer = NodesOutputAnalyzer(groundTruthNetwork)
+val edgesOutputAnalyzer = EdgesOutputAnalyzer(groundTruthNetwork)
+val channelsOutputAnalyzer = ChannelsOutputAnalyzer(groundTruthNetwork)
 
 
 val inputFilePathPropertyFile = File("input_files.properties")
 val inputFilePathProperty = Properties()
+val groundTruthFilePathPropertyFile = File("ground_truth_files.properties")
+val groundTruthFilePathProperty = Properties()
 
-val mainWindowState = mutableStateOf(MainWindowState.Initialized)
+val estimationWindowState = mutableStateOf(EstimationWindowState.Initialized)
+val groundTruthWindowState = mutableStateOf(GroundTruthWindowState.Initialized)
 
-enum class MainWindowState {
+enum class EstimationWindowState {
     Initialized, FilesReady, ChannelAnnouncementLogLoading, ChannelAnnouncementLogLoaded, ChannelUpdateLogLoading, ChannelUpdateLogLoaded,
+}
+
+enum class GroundTruthWindowState {
+    Initialized, FilesReady, ChannelOutputLoading, ChannelOutputLoaded, EdgesOutputLoading, EdgesOutputLoaded, NodesOutputLoading, NodesOutputLoaded, PaymentOutputLoading, PaymentsOutputLoaded,
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
 
     // init file requirements
-    val files by remember {
+    val filesForEstimation by remember {
+        mutableStateOf(
+            mutableMapOf<String, File?>(
+                "channel_announcement_log.csv" to null,
+                "channel_update_log.csv" to null,
+            )
+        )
+    }
+    val filesForGroundTruth by remember {
         mutableStateOf(
             mutableMapOf<String, File?>(
                 "payments_output.csv" to null,
                 "channels_output.csv" to null,
                 "edges_output.csv" to null,
                 "nodes_output.csv" to null,
-                "channel_announcement_log.csv" to null,
-                "channel_update_log.csv" to null,
             )
         )
     }
@@ -66,19 +82,26 @@ fun main() = application {
     // inflate file path from property file
     try {
         inputFilePathProperty.load(FileInputStream(inputFilePathPropertyFile))
-        files.forEach { (filename, _) ->
-            if(inputFilePathProperty.getProperty(filename) != null){
-                files[filename] = File(inputFilePathProperty.getProperty(filename)!!)
+        filesForEstimation.forEach { (filename, _) ->
+            if (inputFilePathProperty.getProperty(filename) != null) {
+                filesForEstimation[filename] = File(inputFilePathProperty.getProperty(filename)!!)
+            }
+        }
+        groundTruthFilePathProperty.load(FileInputStream(groundTruthFilePathPropertyFile))
+        filesForGroundTruth.forEach { (filename, _) ->
+            if (groundTruthFilePathProperty.getProperty(filename) != null) {
+                filesForGroundTruth[filename] = File(groundTruthFilePathProperty.getProperty(filename)!!)
             }
         }
     } catch (e: Exception) {
         e.printStackTrace()
     }
 
-    println(mainWindowState.value)
-    when (mainWindowState.value) {
-        MainWindowState.Initialized -> {
-            Window(onCloseRequest = {}, title = "file load test") {
+    // ↓ estimation windows
+    println(estimationWindowState.value)
+    when (estimationWindowState.value) {
+        EstimationWindowState.Initialized -> {
+            Window(onCloseRequest = {}, title = "required files") {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
@@ -86,71 +109,67 @@ fun main() = application {
                         Spacer(modifier = Modifier.weight(1f))
                         IconButton(
                             onClick = {
-                                files.forEach { (_, file) ->
+                                filesForEstimation.forEach { (_, file) ->
                                     if (file == null) {
                                         return@IconButton
                                     }
                                 }
 
-                                files.forEach { (_, file) ->
+                                filesForEstimation.forEach { (_, file) ->
                                     inputFilePathProperty.setProperty(file!!.name, file.path)
                                 }
                                 inputFilePathProperty.store(FileOutputStream(inputFilePathPropertyFile), null)
 
-                                mainWindowState.value = MainWindowState.FilesReady
+                                estimationWindowState.value = EstimationWindowState.FilesReady
                             }
                         ) {
                             Text("Next > ")
                         }
                     }
-                    MultipleFileLoadComponent(files, modifier = Modifier.fillMaxWidth())
+                    MultipleFileLoadComponent(filesForEstimation, modifier = Modifier.fillMaxWidth())
                 }
             }
         }
 
-        MainWindowState.FilesReady -> {
-            if (mainWindowState.value != MainWindowState.ChannelAnnouncementLogLoading) {
-                mainWindowState.value = MainWindowState.ChannelAnnouncementLogLoading
+        EstimationWindowState.FilesReady -> {
+            if (estimationWindowState.value != EstimationWindowState.ChannelAnnouncementLogLoading) {
+                estimationWindowState.value = EstimationWindowState.ChannelAnnouncementLogLoading
                 try {
                     channelAnnouncementAnalyzer.load(
-                        logFile = files["channel_announcement_log.csv"]!!,
+                        logFile = filesForEstimation["channel_announcement_log.csv"]!!,
                         onLoadCompleted = {
-                            mainWindowState.value = MainWindowState.ChannelAnnouncementLogLoaded
+                            estimationWindowState.value = EstimationWindowState.ChannelAnnouncementLogLoaded
                         }
                     )
-                }catch (e: Exception){
+                } catch (e: Exception) {
                     e.printStackTrace()
-                    mainWindowState.value = MainWindowState.Initialized
+                    estimationWindowState.value = EstimationWindowState.Initialized
                 }
             }
         }
 
-        MainWindowState.ChannelAnnouncementLogLoading -> {
+        EstimationWindowState.ChannelAnnouncementLogLoading -> {}
 
-        }
-
-        MainWindowState.ChannelAnnouncementLogLoaded -> {
-            if (mainWindowState.value != MainWindowState.ChannelUpdateLogLoading) {
-                mainWindowState.value = MainWindowState.ChannelUpdateLogLoading
+        EstimationWindowState.ChannelAnnouncementLogLoaded -> {
+            if (estimationWindowState.value != EstimationWindowState.ChannelUpdateLogLoading) {
+                estimationWindowState.value = EstimationWindowState.ChannelUpdateLogLoading
                 try {
                     channelUpdateAnalyzer.load(
-                        logFile = files["channel_update_log.csv"]!!,
+                        logFile = filesForEstimation["channel_update_log.csv"]!!,
                         onLoadCompleted = {
-                            mainWindowState.value = MainWindowState.ChannelUpdateLogLoaded
+                            estimationWindowState.value = EstimationWindowState.ChannelUpdateLogLoaded
                         }
                     )
-                }catch (e: Exception){
+                } catch (e: Exception) {
                     e.printStackTrace()
-                    mainWindowState.value = MainWindowState.Initialized
+                    estimationWindowState.value = EstimationWindowState.Initialized
                 }
             }
         }
 
-        MainWindowState.ChannelUpdateLogLoading -> {
+        EstimationWindowState.ChannelUpdateLogLoading -> {}
 
-        }
-
-        MainWindowState.ChannelUpdateLogLoaded -> {
+        EstimationWindowState.ChannelUpdateLogLoaded -> {
             Window(
                 onCloseRequest = {},
                 title = "estimated topology"
@@ -200,17 +219,7 @@ fun main() = application {
                 }
             }
         }
-
     }
-
-
-    CSVAnalyzerWindow(
-        windowTitle = "PaymentsOutputAnalyzer",
-        analyzer = groundTruthAnalyzer,
-        layoutOnAnalyzeCompleted = {
-
-        },
-    )
 
     CSVAnalyzerWindow(
         "NodeList",
@@ -289,4 +298,143 @@ fun main() = application {
             )
         },
     )
+    // ↑ estimation windows
+
+    // ↓ ground truth windows
+    println(groundTruthWindowState.value)
+    when(groundTruthWindowState.value){
+        GroundTruthWindowState.Initialized -> {
+
+            Window(onCloseRequest = {}, title = "required files") {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row {
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(
+                            onClick = {
+                                filesForGroundTruth.forEach { (_, file) ->
+                                    if (file == null) {
+                                        return@IconButton
+                                    }
+                                }
+
+                                filesForGroundTruth.forEach { (_, file) ->
+                                    groundTruthFilePathProperty.setProperty(file!!.name, file.path)
+                                }
+                                groundTruthFilePathProperty.store(FileOutputStream(groundTruthFilePathPropertyFile), null)
+
+                                groundTruthWindowState.value = GroundTruthWindowState.FilesReady
+                            }
+                        ) {
+                            Text("Next > ")
+                        }
+                    }
+                    MultipleFileLoadComponent(filesForGroundTruth, modifier = Modifier.fillMaxWidth())
+                }
+            }
+        }
+        GroundTruthWindowState.FilesReady -> {
+            if(groundTruthWindowState.value != GroundTruthWindowState.ChannelOutputLoading) {
+                groundTruthWindowState.value = GroundTruthWindowState.ChannelOutputLoading
+                try {
+                    channelsOutputAnalyzer.load(
+                        filesForGroundTruth["channels_output.csv"]!!,
+                        onLoadCompleted = {
+                            groundTruthWindowState.value = GroundTruthWindowState.ChannelOutputLoaded
+                        }
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    groundTruthWindowState.value = GroundTruthWindowState.Initialized
+                }
+            }
+        }
+        GroundTruthWindowState.ChannelOutputLoading -> {}
+        GroundTruthWindowState.ChannelOutputLoaded -> {
+
+            if(groundTruthWindowState.value != GroundTruthWindowState.EdgesOutputLoading) {
+                groundTruthWindowState.value = GroundTruthWindowState.EdgesOutputLoading
+                try {
+                    edgesOutputAnalyzer.load(
+                        filesForGroundTruth["edges_output.csv"]!!,
+                        onLoadCompleted = {
+                            groundTruthWindowState.value = GroundTruthWindowState.EdgesOutputLoaded
+                        }
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    groundTruthWindowState.value = GroundTruthWindowState.Initialized
+                }
+            }
+        }
+        GroundTruthWindowState.EdgesOutputLoading -> {}
+        GroundTruthWindowState.EdgesOutputLoaded -> {
+
+
+            if(groundTruthWindowState.value != GroundTruthWindowState.NodesOutputLoading) {
+                groundTruthWindowState.value = GroundTruthWindowState.NodesOutputLoading
+                try {
+                    nodesOutputAnalyzer.load(
+                        filesForGroundTruth["nodes_output.csv"]!!,
+                        onLoadCompleted = {
+                            groundTruthWindowState.value = GroundTruthWindowState.NodesOutputLoaded
+                        }
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    groundTruthWindowState.value = GroundTruthWindowState.Initialized
+                }
+            }
+        }
+        GroundTruthWindowState.NodesOutputLoading -> {}
+        GroundTruthWindowState.NodesOutputLoaded -> {
+
+
+            if(groundTruthWindowState.value != GroundTruthWindowState.PaymentOutputLoading) {
+                groundTruthWindowState.value = GroundTruthWindowState.PaymentOutputLoading
+                try {
+                    paymentsOutputAnalyzer.load(
+                        filesForGroundTruth["payments_output.csv"]!!,
+                        onLoadCompleted = {
+                            groundTruthWindowState.value = GroundTruthWindowState.PaymentsOutputLoaded
+                        }
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    groundTruthWindowState.value = GroundTruthWindowState.Initialized
+                }
+            }
+        }
+        GroundTruthWindowState.PaymentOutputLoading -> {}
+        GroundTruthWindowState.PaymentsOutputLoaded -> {
+            // construct network
+        }
+    }
+
+    CSVAnalyzerWindow(
+        windowTitle = "ChannelsOutputAnalyzer",
+        channelsOutputAnalyzer,
+        layoutOnAnalyzeCompleted = {}
+    )
+
+    CSVAnalyzerWindow(
+        windowTitle = "EdgesOutputAnalyzer",
+        edgesOutputAnalyzer,
+        layoutOnAnalyzeCompleted = {}
+    )
+
+    CSVAnalyzerWindow(
+        windowTitle = "NodesOutputAnalyzer",
+        nodesOutputAnalyzer,
+        layoutOnAnalyzeCompleted = {}
+    )
+
+    CSVAnalyzerWindow(
+        windowTitle = "PaymentsOutputAnalyzer",
+        paymentsOutputAnalyzer,
+        layoutOnAnalyzeCompleted = {}
+    )
+
+    // ↑ ground truth windows
 }

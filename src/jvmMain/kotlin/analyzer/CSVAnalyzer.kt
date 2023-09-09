@@ -45,7 +45,9 @@ abstract class CSVAnalyzer {
                 var line: String?
                 while (br.readLine().also { line = it } != null) {
                     try {
-                        analyzeCSVLine(line)
+                        if(line != null) {
+                            analyzeCSVLine(line!!.split(","))
+                        }
                     } catch (e: Exception) {
                         if (lineCount != 0) {
                             e.printStackTrace()
@@ -67,7 +69,7 @@ abstract class CSVAnalyzer {
         }
     }
 
-    abstract fun analyzeCSVLine(lineText: String?)
+    abstract fun analyzeCSVLine(csvElements: List<String>)
     abstract fun onAnalyzingFinished()
 
     open fun onLogFileLoaded(logFile: File): String? {

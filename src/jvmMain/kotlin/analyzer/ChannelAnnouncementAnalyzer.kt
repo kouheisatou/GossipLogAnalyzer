@@ -3,7 +3,7 @@ package analyzer
 import network.Channel
 import network.Node
 import androidx.compose.runtime.*
-import gossip_msg.ChannelAnnouncement
+import model.input_gossip_msg.ChannelAnnouncement
 import network.Network
 import java.io.File
 
@@ -11,21 +11,19 @@ class ChannelAnnouncementAnalyzer(private val estimatedNetwork: Network) : CSVAn
 
     var nodeListForDisplay = mutableStateOf<List<Node>?>(null)
 
-    override fun analyzeCSVLine(lineText: String?) {
-        if (lineText == null) return
-        val csvElement = lineText.split(",")
+    override fun analyzeCSVLine(csvElements: List<String>) {
         val channelAnnouncement = ChannelAnnouncement(
-            csvElement[0],
-            csvElement[1],
-            csvElement[2],
-            csvElement[3],
-            csvElement[4],
-            csvElement[5],
-            csvElement[6],
-            csvElement[7],
-            csvElement[8],
-            csvElement[9],
-            csvElement[10],
+            csvElements[0],
+            csvElements[1],
+            csvElements[2],
+            csvElements[3],
+            csvElements[4],
+            csvElements[5],
+            csvElements[6],
+            csvElements[7],
+            csvElements[8],
+            csvElements[9],
+            csvElements[10],
         )
 
         val node1 = estimatedNetwork.nodes[channelAnnouncement.nodeId1] ?: Node(channelAnnouncement.nodeId1, estimatedNetwork)

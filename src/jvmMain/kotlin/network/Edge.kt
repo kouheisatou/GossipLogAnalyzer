@@ -1,4 +1,4 @@
-package model.network
+package network
 
 enum class Direction {
     Node1ToNode2, Node2ToNode1

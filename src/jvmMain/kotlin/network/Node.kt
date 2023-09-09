@@ -1,4 +1,4 @@
-package model.network
+package network
 
 import ui.SelectableListComponent
 import Topology
