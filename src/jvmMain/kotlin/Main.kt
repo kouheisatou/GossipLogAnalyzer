@@ -113,12 +113,17 @@ fun main() = application {
         MainWindowState.FilesReady -> {
             if (mainWindowState.value != MainWindowState.ChannelAnnouncementLogLoading) {
                 mainWindowState.value = MainWindowState.ChannelAnnouncementLogLoading
-                channelAnnouncementAnalyzer.load(
-                    logFile = files["channel_announcement_log.csv"]!!,
-                    onLoadCompleted = {
-                        mainWindowState.value = MainWindowState.ChannelAnnouncementLogLoaded
-                    }
-                )
+                try {
+                    channelAnnouncementAnalyzer.load(
+                        logFile = files["channel_announcement_log.csv"]!!,
+                        onLoadCompleted = {
+                            mainWindowState.value = MainWindowState.ChannelAnnouncementLogLoaded
+                        }
+                    )
+                }catch (e: Exception){
+                    e.printStackTrace()
+                    mainWindowState.value = MainWindowState.Initialized
+                }
             }
         }
 
@@ -129,12 +134,17 @@ fun main() = application {
         MainWindowState.ChannelAnnouncementLogLoaded -> {
             if (mainWindowState.value != MainWindowState.ChannelUpdateLogLoading) {
                 mainWindowState.value = MainWindowState.ChannelUpdateLogLoading
-                channelUpdateAnalyzer.load(
-                    logFile = files["channel_update_log.csv"]!!,
-                    onLoadCompleted = {
-                        mainWindowState.value = MainWindowState.ChannelUpdateLogLoaded
-                    }
-                )
+                try {
+                    channelUpdateAnalyzer.load(
+                        logFile = files["channel_update_log.csv"]!!,
+                        onLoadCompleted = {
+                            mainWindowState.value = MainWindowState.ChannelUpdateLogLoaded
+                        }
+                    )
+                }catch (e: Exception){
+                    e.printStackTrace()
+                    mainWindowState.value = MainWindowState.Initialized
+                }
             }
         }
 
