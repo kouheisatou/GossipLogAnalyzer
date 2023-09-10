@@ -42,14 +42,14 @@ class ChannelUpdateAnalyzer(private val estimatedNetwork: Network) : CSVAnalyzer
         )
 
         val channel = estimatedNetwork.channels[channelUpdate.shortChannelId]
-        channel?.channelUpdates?.add(channelUpdate)
+        channel?.addChannelUpdate(channelUpdate)
     }
 
     override fun onAnalyzingFinished() {
         val list = mutableListOf<Channel>()
-        estimatedNetwork.channels.toList().sortedByDescending { it.second.channelUpdates.size }.forEach {
-            list.add(it.second)
-        }
+        estimatedNetwork.channels.toList()
+            .sortedByDescending { it.second.edgeNode1ToNode2.channelUpdates.size + it.second.edgeNode2ToNode1.channelUpdates.size }
+            .forEach { list.add(it.second) }
         channelsForDisplay.value = list
     }
 

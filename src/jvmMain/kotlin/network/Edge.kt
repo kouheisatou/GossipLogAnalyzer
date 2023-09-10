@@ -1,15 +1,38 @@
 package network
 
+import model.input_gossip_msg.ChannelUpdate
+
 enum class Direction {
-    Node1ToNode2, Node2ToNode1
+    Node1ToNode2 {
+        override fun toString(): String {
+            return "0"
+        }
+    },
+    Node2ToNode1 {
+        override fun toString(): String {
+            return "1"
+        }
+    }
 }
 
 class Edge(val channel: Channel, private val direction: Direction) {
 
-    // channel update count
-    val capacity: Int
+    val channelUpdates = mutableListOf<ChannelUpdate>()
     val sourceNode: Node
     val destinationNode: Node
+    val counterEdge: Edge
+        get() {
+            return if (direction == Direction.Node1ToNode2) {
+                channel.edgeNode2ToNode1
+            } else {
+                channel.edgeNode1ToNode2
+            }
+        }
+
+    val capacity: Long?
+        get() {
+            return channelUpdates.lastOrNull()?.htlcMaximumMsat
+        }
 
     init {
 
@@ -25,42 +48,9 @@ class Edge(val channel: Channel, private val direction: Direction) {
             }
         }
 
-        var count = 0
-        channel.channelUpdates.forEach {
-            if (it.channelFlags.endsWith(
-                    when (direction) {
-                        Direction.Node1ToNode2 -> "0"
-                        Direction.Node2ToNode1 -> "1"
-                    }
-                )
-            ) {
-                count++
-            }
-        }
-
-        capacity = count
     }
 
     override fun toString(): String {
-        return "Edge(channel=$channel, direction=$direction, channelUpdateCount=$capacity)"
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Edge
-
-        if (channel != other.channel) return false
-        if (direction != other.direction) return false
-        if (capacity != other.capacity) return false
-        if (sourceNode != other.sourceNode) return false
-        return destinationNode == other.destinationNode
-    }
-
-    override fun hashCode(): Int {
-        var result = channel.hashCode()
-        result = 31 * result + direction.hashCode()
-        return result
+        return "Edge(channel=$channel, direction=$direction, channelUpdate=$channelUpdates)"
     }
 }

@@ -1,5 +1,7 @@
 package model.ground_truth_simulator_outputs
 
+import network.Edge
+
 data class PaymentOutput(
     val id: String,
     val senderId: String,
@@ -13,6 +15,6 @@ data class PaymentOutput(
     val offlineNodeCount: String,
     val timeoutExp: String,
     val attempts: String,
-    val route: List<EdgesOutput>,
+    val route: List<EdgeOutput>,
     val totalFee: String,
 )

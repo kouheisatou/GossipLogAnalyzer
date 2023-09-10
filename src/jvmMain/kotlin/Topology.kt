@@ -24,6 +24,7 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
+import kotlin.math.max
 
 
 class Topology(
@@ -41,7 +42,18 @@ class Topology(
     )
     val model = BaseVisualizationModel(g, algorithm, graphSize)
 
-    var maxEdgeCapacity = 0
+    var maxEdgeCapacity = let {
+        var max = 0
+        network.channels.forEach {
+            if (max < it.value.edgeNode1ToNode2.channelUpdates.size) {
+                max = it.value.edgeNode1ToNode2.channelUpdates.size
+            }
+            if (max < it.value.edgeNode2ToNode1.channelUpdates.size) {
+                max = it.value.edgeNode2ToNode1.channelUpdates.size
+            }
+        }
+        return@let max
+    }
 
     var rootNode: Node? = null
     var selectedNode = mutableStateOf<Node?>(null)
@@ -52,18 +64,17 @@ class Topology(
     init {
 
         for ((_, channel) in network.channels) {
-            val edge1To2 = Edge(channel, Direction.Node1ToNode2)
-            val edge2To1 = Edge(channel, Direction.Node2ToNode1)
 
-            if (edge1To2.capacity > maxEdgeCapacity) {
-                maxEdgeCapacity = edge1To2.capacity
-            }
-            if (edge2To1.capacity > maxEdgeCapacity) {
-                maxEdgeCapacity = edge2To1.capacity
-            }
-
-            if (edge1To2.capacity > 0) g.addEdge(edge1To2.sourceNode, edge1To2.destinationNode, edge1To2)
-            if (edge2To1.capacity > 0) g.addEdge(edge2To1.sourceNode, edge2To1.destinationNode, edge2To1)
+            if (channel.edgeNode1ToNode2.channelUpdates.size > 0) g.addEdge(
+                channel.edgeNode1ToNode2.sourceNode,
+                channel.edgeNode1ToNode2.destinationNode,
+                channel.edgeNode1ToNode2
+            )
+            if (channel.edgeNode2ToNode1.channelUpdates.size > 0) g.addEdge(
+                channel.edgeNode2ToNode1.sourceNode,
+                channel.edgeNode2ToNode1.destinationNode,
+                channel.edgeNode2ToNode1
+            )
         }
     }
 
@@ -88,19 +99,21 @@ class Topology(
 
             node.channels.forEach { channel ->
 
-                val edge1To2 = Edge(channel, Direction.Node1ToNode2)
-                val edge2To1 = Edge(channel, Direction.Node2ToNode1)
-
-                if (edge1To2.capacity > maxEdgeCapacity) {
-                    maxEdgeCapacity = edge1To2.capacity
-                }
-                if (edge2To1.capacity > maxEdgeCapacity) {
-                    maxEdgeCapacity = edge2To1.capacity
-                }
+                val edge1To2 = channel.edgeNode1ToNode2
+                val edge2To1 = channel.edgeNode2ToNode1
 
                 if (!g.edges().contains(edge1To2) && !g.edges().contains(edge2To1)) {
-                    if (edge1To2.capacity > 0) g.addEdge(edge1To2.sourceNode, edge1To2.destinationNode, edge1To2)
-                    if (edge2To1.capacity > 0) g.addEdge(edge2To1.sourceNode, edge2To1.destinationNode, edge2To1)
+
+                    if (edge1To2.channelUpdates.size > 0) g.addEdge(
+                        edge1To2.sourceNode,
+                        edge1To2.destinationNode,
+                        edge1To2
+                    )
+                    if (edge2To1.channelUpdates.size > 0) g.addEdge(
+                        edge2To1.sourceNode,
+                        edge2To1.destinationNode,
+                        edge2To1
+                    )
 
                     if (channel.node2 != node) {
                         build(channel.node2, depth + 1)
@@ -147,7 +160,7 @@ fun TopologyComponent(
 
         // edge stroke width
         renderContext.setEdgeStrokeFunction {
-            BasicStroke(topology.maxStrokeWidth.toFloat() * it.capacity / topology.maxEdgeCapacity)
+            BasicStroke(topology.maxStrokeWidth.toFloat() * it.channelUpdates.size / topology.maxEdgeCapacity)
         }
 
         // node size

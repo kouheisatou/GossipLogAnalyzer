@@ -3,6 +3,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.Divider
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.getValue
@@ -34,7 +35,7 @@ val channelUpdateAnalyzer = ChannelUpdateAnalyzer(estimatedNetwork)
 val channelAnnouncementAnalyzer = ChannelAnnouncementAnalyzer(estimatedNetwork)
 
 val groundTruthNetwork = Network()
-val paymentsOutputAnalyzer = PaymentOutputAnalyzer(groundTruthNetwork)
+val paymentsOutputAnalyzer = PaymentsOutputAnalyzer(groundTruthNetwork)
 val nodesOutputAnalyzer = NodesOutputAnalyzer(groundTruthNetwork)
 val edgesOutputAnalyzer = EdgesOutputAnalyzer(groundTruthNetwork)
 val channelsOutputAnalyzer = ChannelsOutputAnalyzer(groundTruthNetwork)
@@ -53,7 +54,7 @@ enum class EstimationWindowState {
 }
 
 enum class GroundTruthWindowState {
-    Initialized, FilesReady, ChannelOutputLoading, ChannelOutputLoaded, EdgesOutputLoading, EdgesOutputLoaded, NodesOutputLoading, NodesOutputLoaded, PaymentOutputLoading, PaymentsOutputLoaded,
+    Initialized, FilesReady, NodesOutputLoading, NodesOutputLoaded, ChannelOutputLoading, ChannelOutputLoaded, EdgesOutputLoading, EdgesOutputLoaded, PaymentOutputLoading, PaymentsOutputLoaded,
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -283,7 +284,7 @@ fun main() = application {
                     Row {
                         Text(channel.shortChannelId)
                         Spacer(modifier = Modifier.weight(1f))
-                        Text(channel.channelUpdates.size.toString())
+                        Text("${channel.edgeNode1ToNode2.channelUpdates.size}|${channel.edgeNode2ToNode1.channelUpdates.size}")
                     }
                 },
                 fetchLatestDetail = {
@@ -302,7 +303,7 @@ fun main() = application {
 
     // ↓ ground truth windows
     println(groundTruthWindowState.value)
-    when(groundTruthWindowState.value){
+    when (groundTruthWindowState.value) {
         GroundTruthWindowState.Initialized -> {
 
             Window(onCloseRequest = {}, title = "required files") {
@@ -322,7 +323,10 @@ fun main() = application {
                                 filesForGroundTruth.forEach { (_, file) ->
                                     groundTruthFilePathProperty.setProperty(file!!.name, file.path)
                                 }
-                                groundTruthFilePathProperty.store(FileOutputStream(groundTruthFilePathPropertyFile), null)
+                                groundTruthFilePathProperty.store(
+                                    FileOutputStream(groundTruthFilePathPropertyFile),
+                                    null
+                                )
 
                                 groundTruthWindowState.value = GroundTruthWindowState.FilesReady
                             }
@@ -334,26 +338,10 @@ fun main() = application {
                 }
             }
         }
-        GroundTruthWindowState.FilesReady -> {
-            if(groundTruthWindowState.value != GroundTruthWindowState.ChannelOutputLoading) {
-                groundTruthWindowState.value = GroundTruthWindowState.ChannelOutputLoading
-                try {
-                    channelsOutputAnalyzer.load(
-                        filesForGroundTruth["channels_output.csv"]!!,
-                        onLoadCompleted = {
-                            groundTruthWindowState.value = GroundTruthWindowState.ChannelOutputLoaded
-                        }
-                    )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    groundTruthWindowState.value = GroundTruthWindowState.Initialized
-                }
-            }
-        }
-        GroundTruthWindowState.ChannelOutputLoading -> {}
-        GroundTruthWindowState.ChannelOutputLoaded -> {
 
-            if(groundTruthWindowState.value != GroundTruthWindowState.EdgesOutputLoading) {
+        GroundTruthWindowState.FilesReady -> {
+
+            if (groundTruthWindowState.value != GroundTruthWindowState.EdgesOutputLoading) {
                 groundTruthWindowState.value = GroundTruthWindowState.EdgesOutputLoading
                 try {
                     edgesOutputAnalyzer.load(
@@ -368,11 +356,10 @@ fun main() = application {
                 }
             }
         }
+
         GroundTruthWindowState.EdgesOutputLoading -> {}
         GroundTruthWindowState.EdgesOutputLoaded -> {
-
-
-            if(groundTruthWindowState.value != GroundTruthWindowState.NodesOutputLoading) {
+            if (groundTruthWindowState.value != GroundTruthWindowState.NodesOutputLoading) {
                 groundTruthWindowState.value = GroundTruthWindowState.NodesOutputLoading
                 try {
                     nodesOutputAnalyzer.load(
@@ -387,11 +374,30 @@ fun main() = application {
                 }
             }
         }
+
         GroundTruthWindowState.NodesOutputLoading -> {}
         GroundTruthWindowState.NodesOutputLoaded -> {
 
+            if (groundTruthWindowState.value != GroundTruthWindowState.ChannelOutputLoading) {
+                groundTruthWindowState.value = GroundTruthWindowState.ChannelOutputLoading
+                try {
+                    channelsOutputAnalyzer.load(
+                        filesForGroundTruth["channels_output.csv"]!!,
+                        onLoadCompleted = {
+                            groundTruthWindowState.value = GroundTruthWindowState.ChannelOutputLoaded
+                        }
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    groundTruthWindowState.value = GroundTruthWindowState.Initialized
+                }
+            }
+        }
 
-            if(groundTruthWindowState.value != GroundTruthWindowState.PaymentOutputLoading) {
+        GroundTruthWindowState.ChannelOutputLoading -> {}
+        GroundTruthWindowState.ChannelOutputLoaded -> {
+
+            if (groundTruthWindowState.value != GroundTruthWindowState.PaymentOutputLoading) {
                 groundTruthWindowState.value = GroundTruthWindowState.PaymentOutputLoading
                 try {
                     paymentsOutputAnalyzer.load(
@@ -406,34 +412,131 @@ fun main() = application {
                 }
             }
         }
+
+
         GroundTruthWindowState.PaymentOutputLoading -> {}
         GroundTruthWindowState.PaymentsOutputLoaded -> {
-            // construct network
+            Window(
+                onCloseRequest = {},
+                title = "ground truth network"
+            ) {
+                val topology by remember {
+                    mutableStateOf(
+                        Topology(
+                            Dimension(19200, 10800),
+                            30,
+                            StaticLayoutAlgorithm(),
+                            groundTruthNetwork,
+                        )
+                    )
+                }
+                TopologyComponent(topology)
+            }
         }
     }
 
     CSVAnalyzerWindow(
+        windowTitle = "NodesOutputAnalyzer",
+        nodesOutputAnalyzer,
+        layoutOnAnalyzeCompleted = {
+            SelectableListComponent(
+                listDataForDisplay = nodesOutputAnalyzer.nodes.toList().sortedByDescending { it.second.openEdges.size },
+                detailWindowTitle = {
+                    it?.second?.id ?: "null"
+                },
+                detailWindowLayout = {
+                    Text(it.toString())
+                },
+                listItemLayout = {
+                    Text(it.second.id)
+                },
+                fetchLatestDetail = {
+                    it
+                },
+                clipboardText = {
+                    it.second.id
+                },
+                listTopRowLayout = {},
+            )
+        }
+    )
+
+    CSVAnalyzerWindow(
         windowTitle = "ChannelsOutputAnalyzer",
         channelsOutputAnalyzer,
-        layoutOnAnalyzeCompleted = {}
+        layoutOnAnalyzeCompleted = {
+            SelectableListComponent(
+                listDataForDisplay = channelsOutputAnalyzer.channels.toList().sortedByDescending { it.second.capacity },
+                detailWindowTitle = {
+                    it?.second?.id ?: "null"
+                },
+                detailWindowLayout = {
+                    Text(it.toString())
+                },
+                listItemLayout = {
+                    Text(it.second.id)
+                },
+                fetchLatestDetail = {
+                    it
+                },
+                clipboardText = {
+                    it.second.id
+                },
+                listTopRowLayout = {},
+            )
+        }
     )
 
     CSVAnalyzerWindow(
         windowTitle = "EdgesOutputAnalyzer",
         edgesOutputAnalyzer,
-        layoutOnAnalyzeCompleted = {}
-    )
-
-    CSVAnalyzerWindow(
-        windowTitle = "NodesOutputAnalyzer",
-        nodesOutputAnalyzer,
-        layoutOnAnalyzeCompleted = {}
+        layoutOnAnalyzeCompleted = {
+            SelectableListComponent(
+                listDataForDisplay = edgesOutputAnalyzer.edges.toList(),
+                detailWindowTitle = {
+                    it?.second?.id ?: "null"
+                },
+                detailWindowLayout = {
+                    Text(it.toString())
+                },
+                listItemLayout = {
+                    Text(it.second.id)
+                },
+                fetchLatestDetail = {
+                    it
+                },
+                clipboardText = {
+                    it.second.id
+                },
+                listTopRowLayout = {},
+            )
+        }
     )
 
     CSVAnalyzerWindow(
         windowTitle = "PaymentsOutputAnalyzer",
         paymentsOutputAnalyzer,
-        layoutOnAnalyzeCompleted = {}
+        layoutOnAnalyzeCompleted = {
+            SelectableListComponent(
+                listDataForDisplay = paymentsOutputAnalyzer.payments.toList().sortedByDescending { it.second.amount },
+                detailWindowTitle = {
+                    it?.second?.id ?: "null"
+                },
+                detailWindowLayout = {
+                    Text(it.toString())
+                },
+                listItemLayout = {
+                    Text(it.second.id)
+                },
+                fetchLatestDetail = {
+                    it
+                },
+                clipboardText = {
+                    it.second.id
+                },
+                listTopRowLayout = {},
+            )
+        }
     )
 
     // ↑ ground truth windows

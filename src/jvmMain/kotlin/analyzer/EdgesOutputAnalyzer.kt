@@ -1,14 +1,16 @@
 package analyzer
 
-import model.ground_truth_simulator_outputs.EdgesOutput
+import model.ground_truth_simulator_outputs.EdgeOutput
+import network.Direction
+import network.Edge
 import network.Network
 
 class EdgesOutputAnalyzer(private val groundTruthNetwork: Network) : CSVAnalyzer() {
 
-    val edges = mutableMapOf<String, EdgesOutput>()
+    val edges = mutableMapOf<String, EdgeOutput>()
 
     override fun analyzeCSVLine(csvElements: List<String>) {
-        edges[csvElements[0]] = EdgesOutput(
+        val edgeOutput = EdgeOutput(
             csvElements[0],
             csvElements[1],
             csvElements[2],
@@ -22,6 +24,8 @@ class EdgesOutputAnalyzer(private val groundTruthNetwork: Network) : CSVAnalyzer
             csvElements[10],
             csvElements[11],
         )
+
+        edges[csvElements[0]] = edgeOutput
     }
 
     override fun onAnalyzingFinished() {

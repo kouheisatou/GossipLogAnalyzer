@@ -24,9 +24,18 @@ class Channel(
     val shortChannelId: String,
     val node1: Node,
     val node2: Node,
-    val network: Network
+    val network: Network,
 ) {
-    val channelUpdates: MutableList<ChannelUpdate> = mutableListOf()
+    val edgeNode1ToNode2: Edge = Edge(this, Direction.Node1ToNode2)
+    val edgeNode2ToNode1: Edge = Edge(this, Direction.Node2ToNode1)
+
+    fun addChannelUpdate(channelUpdate: ChannelUpdate) {
+        if (channelUpdate.direction == Direction.Node1ToNode2) {
+            edgeNode1ToNode2
+        } else {
+            edgeNode2ToNode1
+        }.channelUpdates.add(channelUpdate)
+    }
 
     override fun equals(other: Any?): Boolean {
         return other is Channel && other.shortChannelId == this.shortChannelId
@@ -48,12 +57,11 @@ fun ChannelDetailComponent(channel: Channel) {
         val data = XYSeriesCollection()
         val node1ToNode2Series = XYSeries("node1 to node2", true)
         val node2ToNode1Series = XYSeries("node2 to node1", true)
-        channel.channelUpdates.forEach {
-            if (it.direction == Direction.Node1ToNode2) {
-                node1ToNode2Series.add(XYDataItem(it.timestamp, it.htlcMaximumMsat))
-            } else {
-                node2ToNode1Series.add(XYDataItem(it.timestamp, it.htlcMaximumMsat))
-            }
+        channel.edgeNode1ToNode2.channelUpdates.forEach {
+            node1ToNode2Series.add(XYDataItem(it.timestamp, it.htlcMaximumMsat))
+        }
+        channel.edgeNode2ToNode1.channelUpdates.forEach {
+            node2ToNode1Series.add(XYDataItem(it.timestamp, it.htlcMaximumMsat))
         }
         data.addSeries(node1ToNode2Series)
         data.addSeries(node2ToNode1Series)
@@ -102,7 +110,13 @@ fun ChannelDetailComponent(channel: Channel) {
             )
 
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                items(channel.channelUpdates) {
+                items(channel.edgeNode1ToNode2.channelUpdates) {
+                    Text(it.toString())
+                    Divider()
+                }
+            }
+            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                items(channel.edgeNode2ToNode1.channelUpdates) {
                     Text(it.toString())
                     Divider()
                 }

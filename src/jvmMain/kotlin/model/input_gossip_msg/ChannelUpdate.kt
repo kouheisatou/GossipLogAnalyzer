@@ -18,9 +18,9 @@ class ChannelUpdate(
 ) {
     val direction: Direction
         get() {
-            return if (channelFlags.endsWith("0")) {
+            return if (channelFlags.endsWith(Direction.Node1ToNode2.toString())) {
                 Direction.Node1ToNode2
-            } else if (channelFlags.endsWith("1")) {
+            } else if (channelFlags.endsWith(Direction.Node2ToNode1.toString())) {
                 Direction.Node2ToNode1
             } else {
                 throw Exception("invalid channel flag")

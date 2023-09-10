@@ -1,6 +1,6 @@
 package model.ground_truth_simulator_outputs
 
-data class EdgesOutput(
+data class EdgeOutput(
     val id: String,
     val channelId: String,
     val counterEdgeId: String,
