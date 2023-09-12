@@ -1,5 +1,6 @@
 package analyzer
 
+import androidx.compose.runtime.mutableStateOf
 import model.ground_truth_simulator_outputs.ChannelOutput
 import model.input_gossip_msg.ChannelUpdate
 import network.Channel
@@ -9,6 +10,7 @@ import network.Node
 
 class ChannelsOutputAnalyzer(private val groundTruthNetwork: Network) : CSVAnalyzer() {
     val channels = mutableMapOf<String, ChannelOutput>()
+    val channelsForDisplay = mutableStateOf<List<Channel>?>(null)
     override fun analyzeCSVLine(csvElements: List<String>) {
         val channelOutput = ChannelOutput(
             csvElements[0],
@@ -31,5 +33,10 @@ class ChannelsOutputAnalyzer(private val groundTruthNetwork: Network) : CSVAnaly
     }
 
     override fun onAnalyzingFinished() {
+        val list = mutableListOf<Channel>()
+        groundTruthNetwork.channels.toList()
+            .sortedByDescending { it.second.edgeNode1ToNode2.channelUpdates.size + it.second.edgeNode2ToNode1.channelUpdates.size }
+            .forEach { list.add(it.second) }
+        channelsForDisplay.value = list
     }
 }

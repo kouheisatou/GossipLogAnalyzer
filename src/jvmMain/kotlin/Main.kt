@@ -223,7 +223,7 @@ fun main() = application {
     }
 
     CSVAnalyzerWindow(
-        "NodeList",
+        "Nodes in Estimated Network",
         channelAnnouncementAnalyzer,
         layoutOnAnalyzeCompleted = {
             SelectableListComponent(
@@ -262,7 +262,7 @@ fun main() = application {
     )
 
     CSVAnalyzerWindow(
-        "ChannelList",
+        "Channels in Estimated Network",
         channelUpdateAnalyzer,
         layoutOnAnalyzeCompleted = {
             SelectableListComponent(
@@ -436,108 +436,81 @@ fun main() = application {
     }
 
     CSVAnalyzerWindow(
-        windowTitle = "NodesOutputAnalyzer",
+        "Nodes in Ground Truth Network",
         nodesOutputAnalyzer,
         layoutOnAnalyzeCompleted = {
             SelectableListComponent(
-                listDataForDisplay = nodesOutputAnalyzer.nodes.toList().sortedByDescending { it.second.openEdges.size },
-                detailWindowTitle = {
-                    it?.second?.id ?: "null"
-                },
+                nodesOutputAnalyzer.nodesForDisplay.value ?: listOf(),
+                detailWindowTitle = { "Node ${it?.id}" },
                 detailWindowLayout = {
-                    Text(it.toString())
+                    if (it != null) {
+                        NodeDetailComponent(it)
+                    }
                 },
-                listItemLayout = {
-                    Text(it.second.id)
+                listTopRowLayout = {
+                    Row {
+                        Text("NodeID")
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text("Channels")
+                    }
+                },
+                listItemLayout = { node: Node ->
+                    Row {
+                        Text(node.id)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(node.channels.size.toString())
+                    }
                 },
                 fetchLatestDetail = {
-                    it
+                    groundTruthNetwork.nodes[it.id]
+                },
+                findByText = {
+                    groundTruthNetwork.nodes[it]
                 },
                 clipboardText = {
-                    it.second.id
+                    it.id
                 },
-                listTopRowLayout = {},
             )
-        }
+        },
     )
 
     CSVAnalyzerWindow(
-        windowTitle = "ChannelsOutputAnalyzer",
+        "Channels in Ground Truth Network",
         channelsOutputAnalyzer,
         layoutOnAnalyzeCompleted = {
             SelectableListComponent(
-                listDataForDisplay = channelsOutputAnalyzer.channels.toList().sortedByDescending { it.second.capacity },
-                detailWindowTitle = {
-                    it?.second?.id ?: "null"
+                listDataForDisplay = channelsOutputAnalyzer.channelsForDisplay.value ?: listOf(),
+                detailWindowTitle = { "Channel ${it?.shortChannelId}" },
+                detailWindowLayout = { selected ->
+                    if (selected != null) {
+                        ChannelDetailComponent(selected)
+                    }
                 },
-                detailWindowLayout = {
-                    Text(it.toString())
+                listTopRowLayout = {
+                    Row {
+                        Text("ChannelID")
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text("Updates")
+                    }
                 },
-                listItemLayout = {
-                    Text(it.second.id)
-                },
-                fetchLatestDetail = {
-                    it
-                },
-                clipboardText = {
-                    it.second.id
-                },
-                listTopRowLayout = {},
-            )
-        }
-    )
-
-    CSVAnalyzerWindow(
-        windowTitle = "EdgesOutputAnalyzer",
-        edgesOutputAnalyzer,
-        layoutOnAnalyzeCompleted = {
-            SelectableListComponent(
-                listDataForDisplay = edgesOutputAnalyzer.edges.toList(),
-                detailWindowTitle = {
-                    it?.second?.id ?: "null"
-                },
-                detailWindowLayout = {
-                    Text(it.toString())
-                },
-                listItemLayout = {
-                    Text(it.second.id)
+                listItemLayout = { channel: Channel ->
+                    Row {
+                        Text(channel.shortChannelId)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text("${channel.edgeNode1ToNode2.channelUpdates.size}|${channel.edgeNode2ToNode1.channelUpdates.size}")
+                    }
                 },
                 fetchLatestDetail = {
-                    it
+                    groundTruthNetwork.channels[it.shortChannelId]
+                },
+                findByText = {
+                    groundTruthNetwork.channels[it]
                 },
                 clipboardText = {
-                    it.second.id
+                    it.shortChannelId
                 },
-                listTopRowLayout = {},
             )
-        }
+        },
     )
-
-    CSVAnalyzerWindow(
-        windowTitle = "PaymentsOutputAnalyzer",
-        paymentsOutputAnalyzer,
-        layoutOnAnalyzeCompleted = {
-            SelectableListComponent(
-                listDataForDisplay = paymentsOutputAnalyzer.payments.toList().sortedByDescending { it.second.amount },
-                detailWindowTitle = {
-                    it?.second?.id ?: "null"
-                },
-                detailWindowLayout = {
-                    Text(it.toString())
-                },
-                listItemLayout = {
-                    Text(it.second.id)
-                },
-                fetchLatestDetail = {
-                    it
-                },
-                clipboardText = {
-                    it.second.id
-                },
-                listTopRowLayout = {},
-            )
-        }
-    )
-
     // ↑ ground truth windows
 }
