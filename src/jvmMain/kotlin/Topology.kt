@@ -27,10 +27,10 @@ import java.awt.geom.Rectangle2D
 import kotlin.math.max
 
 
-class Topology(
+class Topology private constructor(
     val graphSize: Dimension,
     val maxStrokeWidth: Int,
-    val algorithm: LayoutAlgorithm<Node>,
+    algorithm: LayoutAlgorithm<Node>,
     val network: Network
 ) {
     val g: MutableNetwork<Node, Edge> = Graphs.synchronizedNetwork(
@@ -61,7 +61,14 @@ class Topology(
 
     val estimatedDemand = estimateDemand(this.network.nodes)
 
-    init {
+    constructor(
+        graphSize: Dimension,
+        maxStrokeWidth: Int,
+        algorithm: LayoutAlgorithm<Node>,
+        network: Network,
+        rootNode: Node? = null
+    ) : this(graphSize, maxStrokeWidth, algorithm, network){
+        this.rootNode = rootNode
 
         for ((_, channel) in network.channels) {
 
