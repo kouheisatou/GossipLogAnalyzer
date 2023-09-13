@@ -42,7 +42,6 @@ fun NodeDetailComponent(node: Node) {
                 Dimension(1920, 1080),
                 5,
                 FRLayoutAlgorithm(),
-                node.network,
                 node,
                 1
             ),

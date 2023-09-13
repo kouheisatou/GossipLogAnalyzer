@@ -83,14 +83,13 @@ class Topology(
         graphSize: Dimension,
         maxStrokeWidth: Int,
         algorithm: LayoutAlgorithm<Node>,
-        network: Network,
         rootNode: Node,
         maxDepth: Int
     ) : this(
         graphSize,
         maxStrokeWidth,
         algorithm,
-        network
+        rootNode.network
     ) {
 
         fun build(node: Node, depth: Int) {

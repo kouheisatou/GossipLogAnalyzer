@@ -9,7 +9,7 @@ import java.io.File
 
 class ChannelAnnouncementAnalyzer(private val estimatedNetwork: Network) : CSVAnalyzer() {
 
-    var nodeListForDisplay = mutableStateOf<List<Node>?>(null)
+    var nodesForDisplay = mutableStateOf<List<Node>?>(null)
 
     override fun analyzeCSVLine(csvElements: List<String>) {
         val channelAnnouncement = ChannelAnnouncement(
@@ -41,7 +41,7 @@ class ChannelAnnouncementAnalyzer(private val estimatedNetwork: Network) : CSVAn
         estimatedNetwork.nodes.toList().sortedByDescending { it.second.channels.size }.forEach {
             list.add(it.second)
         }
-        nodeListForDisplay.value = list
+        nodesForDisplay.value = list
     }
 
     override fun onLogFileLoaded(logFile: File): String? {

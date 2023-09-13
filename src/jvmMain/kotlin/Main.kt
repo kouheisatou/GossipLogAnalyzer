@@ -3,7 +3,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.Divider
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.getValue
@@ -227,7 +226,7 @@ fun main() = application {
         channelAnnouncementAnalyzer,
         layoutOnAnalyzeCompleted = {
             SelectableListComponent(
-                channelAnnouncementAnalyzer.nodeListForDisplay.value ?: listOf(),
+                channelAnnouncementAnalyzer.nodesForDisplay.value ?: listOf(),
                 detailWindowTitle = { "Node ${it?.id}" },
                 detailWindowLayout = {
                     if (it != null) {

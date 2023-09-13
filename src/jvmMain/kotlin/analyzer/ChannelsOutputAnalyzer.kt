@@ -24,12 +24,14 @@ class ChannelsOutputAnalyzer(private val groundTruthNetwork: Network) : CSVAnaly
 
         channels[csvElements[0]] = channelOutput
 
-        groundTruthNetwork.channels[channelOutput.id] = Channel(
-            channelOutput.id,
-            groundTruthNetwork.nodes[channelOutput.node1] ?: return,
-            groundTruthNetwork.nodes[channelOutput.node2] ?: return,
-            groundTruthNetwork,
-        )
+        val node1 = groundTruthNetwork.nodes[channelOutput.node1] ?: return
+        val node2 = groundTruthNetwork.nodes[channelOutput.node2] ?: return
+
+        val channel = Channel(channelOutput.id, node1, node2, groundTruthNetwork)
+
+        node1.channels.add(channel)
+        node2.channels.add(channel)
+        groundTruthNetwork.channels[channelOutput.id] = channel
     }
 
     override fun onAnalyzingFinished() {
