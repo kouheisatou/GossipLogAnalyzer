@@ -30,6 +30,7 @@ import kotlin.math.max
 class Topology private constructor(
     val graphSize: Dimension,
     val maxStrokeWidth: Int,
+    val maxNodeSize: Int,
     algorithm: LayoutAlgorithm<Node>,
     val network: Network
 ) {
@@ -64,10 +65,11 @@ class Topology private constructor(
     constructor(
         graphSize: Dimension,
         maxStrokeWidth: Int,
+        maxNodeSize: Int,
         algorithm: LayoutAlgorithm<Node>,
         network: Network,
         rootNode: Node? = null
-    ) : this(graphSize, maxStrokeWidth, algorithm, network){
+    ) : this(graphSize, maxStrokeWidth, maxNodeSize, algorithm, network) {
         this.rootNode = rootNode
 
         for ((_, channel) in network.channels) {
@@ -89,15 +91,13 @@ class Topology private constructor(
     constructor(
         graphSize: Dimension,
         maxStrokeWidth: Int,
+        maxNodeSize: Int,
         algorithm: LayoutAlgorithm<Node>,
         rootNode: Node,
         maxDepth: Int
-    ) : this(
-        graphSize,
-        maxStrokeWidth,
-        algorithm,
-        rootNode.network
-    ) {
+    ) : this(graphSize, maxStrokeWidth, maxNodeSize, algorithm, rootNode.network) {
+
+        this.rootNode = rootNode
 
         fun build(node: Node, depth: Int) {
 
@@ -170,13 +170,14 @@ fun TopologyComponent(
         }
 
         // node size
-        renderContext.setNodeShapeFunction {
-            Circle(edu.uci.ics.jung.layout.model.Point.of(0.0, 0.0), 0.2)
+        renderContext.setNodeShapeFunction { node ->
             Rectangle2D.Float(
                 0f,
                 0f,
-                (topology.estimatedDemand[it]?.toFloat() ?: 0f) + 1f,
-                (topology.estimatedDemand[it]?.toFloat() ?: 0f) + 1f,
+                topology.maxNodeSize * (topology.estimatedDemand[node]?.toFloat()
+                    ?: 0f) / topology.estimatedDemand.maxOf { it.value },
+                topology.maxNodeSize * (topology.estimatedDemand[node]?.toFloat()
+                    ?: 0f) / topology.estimatedDemand.maxOf { it.value },
             )
         }
 

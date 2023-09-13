@@ -98,7 +98,6 @@ fun main() = application {
     }
 
     // ↓ estimation windows
-    println(estimationWindowState.value)
     when (estimationWindowState.value) {
         EstimationWindowState.Initialized -> {
             Window(onCloseRequest = {}, title = "required files") {
@@ -179,6 +178,7 @@ fun main() = application {
                         Topology(
                             Dimension(19200, 10800),
                             30,
+                            100,
                             StaticLayoutAlgorithm(),
                             estimatedNetwork,
                         )
@@ -301,7 +301,6 @@ fun main() = application {
     // ↑ estimation windows
 
     // ↓ ground truth windows
-    println(groundTruthWindowState.value)
     when (groundTruthWindowState.value) {
         GroundTruthWindowState.Initialized -> {
 
@@ -424,6 +423,7 @@ fun main() = application {
                         Topology(
                             Dimension(19200, 10800),
                             30,
+                            100,
                             StaticLayoutAlgorithm(),
                             groundTruthNetwork,
                         )

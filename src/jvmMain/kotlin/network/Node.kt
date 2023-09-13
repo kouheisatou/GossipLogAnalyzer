@@ -41,6 +41,7 @@ fun NodeDetailComponent(node: Node) {
             Topology(
                 Dimension(1920, 1080),
                 5,
+                100,
                 FRLayoutAlgorithm(),
                 node,
                 1
