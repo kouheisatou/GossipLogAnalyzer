@@ -1,16 +1,24 @@
 package network
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.*
 import ui.SelectableListComponent
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.onClick
 import androidx.compose.material.Divider
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Window
 import model.input_gossip_msg.ChannelUpdate
 import org.jfree.chart.ChartFactory
 import org.jfree.chart.ChartPanel
@@ -51,6 +59,7 @@ class Channel(
 
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChannelDetailComponent(channel: Channel) {
     Column {
@@ -87,40 +96,79 @@ fun ChannelDetailComponent(channel: Channel) {
 
         Divider(modifier = Modifier.fillMaxWidth())
 
-        Row(modifier = Modifier.fillMaxWidth().weight(1f)) {
-            SelectableListComponent(
-                listTitle = "Nodes",
-                modifier = Modifier.weight(1f),
-                listDataForDisplay = listOf(channel.node1, channel.node2),
-                detailWindowTitle = { "Node ${it?.id}" },
-                detailWindowLayout = {
-                    if (it != null) {
-                        NodeDetailComponent(it)
+        SelectableListComponent(
+            listTitle = "Nodes",
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            listDataForDisplay = listOf(channel.node1, channel.node2),
+            detailWindowTitle = { "Node ${it?.id}" },
+            detailWindowLayout = {
+                if (it != null) {
+                    NodeDetailComponent(it)
+                }
+            },
+            listItemLayout = {
+                Column {
+                    if (it == channel.node1) {
+                        var showChannelUpdate by remember { mutableStateOf(false) }
+                        Row {
+                            Text("Node1 : ${channel.node1.id}", color = Color.Red, modifier = Modifier.weight(1f))
+                            IconButton(onClick = {
+                                showChannelUpdate = !showChannelUpdate
+                            }) {
+                                Text(
+                                    if (showChannelUpdate) {
+                                        "^"
+                                    } else {
+                                        "v"
+                                    }
+                                )
+                            }
+                        }
+                        if (showChannelUpdate) {
+                            Text("Channel Updates of ${channel.node1.id}(Node1) to ${channel.node2.id}(Node2)")
+                            Divider()
+                            Column {
+                                channel.edgeNode1ToNode2.channelUpdates.forEach {
+                                    Text(it.toString())
+                                }
+                                Divider()
+                            }
+                        }
+                    } else {
+                        var showChannelUpdate by remember { mutableStateOf(false) }
+                        Row {
+                            Text("Node2 : ${channel.node2.id}", color = Color.Blue, modifier = Modifier.weight(1f))
+                            IconButton(onClick = {
+                                showChannelUpdate = !showChannelUpdate
+                            }) {
+                                Text(
+                                    if (showChannelUpdate) {
+                                        "^"
+                                    } else {
+                                        "v"
+                                    }
+                                )
+                            }
+                        }
+                        if (showChannelUpdate) {
+                            Text("Channel Updates of ${channel.node2.id}(Node2) to ${channel.node1.id}(Node1)")
+                            Divider()
+                            Column {
+                                channel.edgeNode1ToNode2.channelUpdates.forEach {
+                                    Text(it.toString())
+                                }
+                                Divider()
+                            }
+                        }
                     }
-                },
-                listItemLayout = {
-                    Text(it.id)
-                },
-                fetchLatestDetail = {
-                    channel.network.nodes[it.id]
-                },
-                clipboardText = {
-                    it.id
-                },
-            )
-
-            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                items(channel.edgeNode1ToNode2.channelUpdates) {
-                    Text(it.toString())
-                    Divider()
                 }
-            }
-            LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                items(channel.edgeNode2ToNode1.channelUpdates) {
-                    Text(it.toString())
-                    Divider()
-                }
-            }
-        }
+            },
+            fetchLatestDetail = {
+                channel.network.nodes[it.id]
+            },
+            clipboardText = {
+                it.id
+            },
+        )
     }
 }
