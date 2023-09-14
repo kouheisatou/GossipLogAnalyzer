@@ -1,18 +1,23 @@
 import analyzer.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.IconButton
+import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyShortcut
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -21,6 +26,7 @@ import network.*
 import ui.FilePicker
 import ui.MultipleFileLoadComponent
 import ui.SelectableListComponent
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.FileDialog
 import java.io.File
@@ -58,6 +64,7 @@ enum class GroundTruthWindowState {
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() = application {
+    var showGroundTruthWindows by remember { mutableStateOf(false) }
 
     // init file requirements
     val filesForEstimation by remember {
@@ -103,9 +110,15 @@ fun main() = application {
             Window(onCloseRequest = {}, title = "required files") {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.End
                 ) {
+                    Text(
+                        text = "Compare with ground truth",
+                        modifier = Modifier.clickable { showGroundTruthWindows = true },
+                        textDecoration = TextDecoration.Underline,
+                    )
                     Row {
-                        Spacer(modifier = Modifier.weight(1f))
+//                        Spacer(modifier = Modifier.weight(1f))
                         IconButton(
                             onClick = {
                                 filesForEstimation.forEach { (_, file) ->
@@ -301,215 +314,222 @@ fun main() = application {
     // ↑ estimation windows
 
     // ↓ ground truth windows
-    when (groundTruthWindowState.value) {
-        GroundTruthWindowState.Initialized -> {
+    if (showGroundTruthWindows) {
+        when (groundTruthWindowState.value) {
+            GroundTruthWindowState.Initialized -> {
 
-            Window(onCloseRequest = {}, title = "required files") {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
+                Window(
+                    onCloseRequest = {
+                        showGroundTruthWindows = false
+                    },
+                    title = "required files",
                 ) {
-                    Row {
-                        Spacer(modifier = Modifier.weight(1f))
-                        IconButton(
-                            onClick = {
-                                filesForGroundTruth.forEach { (_, file) ->
-                                    if (file == null) {
-                                        return@IconButton
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row {
+                            Spacer(modifier = Modifier.weight(1f))
+                            IconButton(
+                                onClick = {
+                                    filesForGroundTruth.forEach { (_, file) ->
+                                        if (file == null) {
+                                            return@IconButton
+                                        }
                                     }
-                                }
 
-                                filesForGroundTruth.forEach { (_, file) ->
-                                    groundTruthFilePathProperty.setProperty(file!!.name, file.path)
-                                }
-                                groundTruthFilePathProperty.store(
-                                    FileOutputStream(groundTruthFilePathPropertyFile),
-                                    null
-                                )
+                                    filesForGroundTruth.forEach { (_, file) ->
+                                        groundTruthFilePathProperty.setProperty(file!!.name, file.path)
+                                    }
+                                    groundTruthFilePathProperty.store(
+                                        FileOutputStream(groundTruthFilePathPropertyFile),
+                                        null
+                                    )
 
-                                groundTruthWindowState.value = GroundTruthWindowState.FilesReady
+                                    groundTruthWindowState.value = GroundTruthWindowState.FilesReady
+                                }
+                            ) {
+                                Text("Next > ")
                             }
-                        ) {
-                            Text("Next > ")
                         }
+                        MultipleFileLoadComponent(filesForGroundTruth, modifier = Modifier.fillMaxWidth())
                     }
-                    MultipleFileLoadComponent(filesForGroundTruth, modifier = Modifier.fillMaxWidth())
                 }
             }
-        }
 
-        GroundTruthWindowState.FilesReady -> {
+            GroundTruthWindowState.FilesReady -> {
 
-            if (groundTruthWindowState.value != GroundTruthWindowState.EdgesOutputLoading) {
-                groundTruthWindowState.value = GroundTruthWindowState.EdgesOutputLoading
-                try {
-                    edgesOutputAnalyzer.load(
-                        filesForGroundTruth["edges_output.csv"]!!,
-                        onLoadCompleted = {
-                            groundTruthWindowState.value = GroundTruthWindowState.EdgesOutputLoaded
-                        }
-                    )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    groundTruthWindowState.value = GroundTruthWindowState.Initialized
-                }
-            }
-        }
-
-        GroundTruthWindowState.EdgesOutputLoading -> {}
-        GroundTruthWindowState.EdgesOutputLoaded -> {
-            if (groundTruthWindowState.value != GroundTruthWindowState.NodesOutputLoading) {
-                groundTruthWindowState.value = GroundTruthWindowState.NodesOutputLoading
-                try {
-                    nodesOutputAnalyzer.load(
-                        filesForGroundTruth["nodes_output.csv"]!!,
-                        onLoadCompleted = {
-                            groundTruthWindowState.value = GroundTruthWindowState.NodesOutputLoaded
-                        }
-                    )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    groundTruthWindowState.value = GroundTruthWindowState.Initialized
-                }
-            }
-        }
-
-        GroundTruthWindowState.NodesOutputLoading -> {}
-        GroundTruthWindowState.NodesOutputLoaded -> {
-
-            if (groundTruthWindowState.value != GroundTruthWindowState.ChannelOutputLoading) {
-                groundTruthWindowState.value = GroundTruthWindowState.ChannelOutputLoading
-                try {
-                    channelsOutputAnalyzer.load(
-                        filesForGroundTruth["channels_output.csv"]!!,
-                        onLoadCompleted = {
-                            groundTruthWindowState.value = GroundTruthWindowState.ChannelOutputLoaded
-                        }
-                    )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    groundTruthWindowState.value = GroundTruthWindowState.Initialized
-                }
-            }
-        }
-
-        GroundTruthWindowState.ChannelOutputLoading -> {}
-        GroundTruthWindowState.ChannelOutputLoaded -> {
-
-            if (groundTruthWindowState.value != GroundTruthWindowState.PaymentOutputLoading) {
-                groundTruthWindowState.value = GroundTruthWindowState.PaymentOutputLoading
-                try {
-                    paymentsOutputAnalyzer.load(
-                        filesForGroundTruth["payments_output.csv"]!!,
-                        onLoadCompleted = {
-                            groundTruthWindowState.value = GroundTruthWindowState.PaymentsOutputLoaded
-                        }
-                    )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    groundTruthWindowState.value = GroundTruthWindowState.Initialized
-                }
-            }
-        }
-
-
-        GroundTruthWindowState.PaymentOutputLoading -> {}
-        GroundTruthWindowState.PaymentsOutputLoaded -> {
-            Window(
-                onCloseRequest = {},
-                title = "ground truth network"
-            ) {
-                val topology by remember {
-                    mutableStateOf(
-                        Topology(
-                            Dimension(19200, 10800),
-                            30,
-                            100,
-                            StaticLayoutAlgorithm(),
-                            groundTruthNetwork,
+                if (groundTruthWindowState.value != GroundTruthWindowState.EdgesOutputLoading) {
+                    groundTruthWindowState.value = GroundTruthWindowState.EdgesOutputLoading
+                    try {
+                        edgesOutputAnalyzer.load(
+                            filesForGroundTruth["edges_output.csv"]!!,
+                            onLoadCompleted = {
+                                groundTruthWindowState.value = GroundTruthWindowState.EdgesOutputLoaded
+                            }
                         )
-                    )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        groundTruthWindowState.value = GroundTruthWindowState.Initialized
+                    }
                 }
-                TopologyComponent(topology)
+            }
+
+            GroundTruthWindowState.EdgesOutputLoading -> {}
+            GroundTruthWindowState.EdgesOutputLoaded -> {
+                if (groundTruthWindowState.value != GroundTruthWindowState.NodesOutputLoading) {
+                    groundTruthWindowState.value = GroundTruthWindowState.NodesOutputLoading
+                    try {
+                        nodesOutputAnalyzer.load(
+                            filesForGroundTruth["nodes_output.csv"]!!,
+                            onLoadCompleted = {
+                                groundTruthWindowState.value = GroundTruthWindowState.NodesOutputLoaded
+                            }
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        groundTruthWindowState.value = GroundTruthWindowState.Initialized
+                    }
+                }
+            }
+
+            GroundTruthWindowState.NodesOutputLoading -> {}
+            GroundTruthWindowState.NodesOutputLoaded -> {
+
+                if (groundTruthWindowState.value != GroundTruthWindowState.ChannelOutputLoading) {
+                    groundTruthWindowState.value = GroundTruthWindowState.ChannelOutputLoading
+                    try {
+                        channelsOutputAnalyzer.load(
+                            filesForGroundTruth["channels_output.csv"]!!,
+                            onLoadCompleted = {
+                                groundTruthWindowState.value = GroundTruthWindowState.ChannelOutputLoaded
+                            }
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        groundTruthWindowState.value = GroundTruthWindowState.Initialized
+                    }
+                }
+            }
+
+            GroundTruthWindowState.ChannelOutputLoading -> {}
+            GroundTruthWindowState.ChannelOutputLoaded -> {
+
+                if (groundTruthWindowState.value != GroundTruthWindowState.PaymentOutputLoading) {
+                    groundTruthWindowState.value = GroundTruthWindowState.PaymentOutputLoading
+                    try {
+                        paymentsOutputAnalyzer.load(
+                            filesForGroundTruth["payments_output.csv"]!!,
+                            onLoadCompleted = {
+                                groundTruthWindowState.value = GroundTruthWindowState.PaymentsOutputLoaded
+                            }
+                        )
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        groundTruthWindowState.value = GroundTruthWindowState.Initialized
+                    }
+                }
+            }
+
+
+            GroundTruthWindowState.PaymentOutputLoading -> {}
+            GroundTruthWindowState.PaymentsOutputLoaded -> {
+                Window(
+                    onCloseRequest = {},
+                    title = "ground truth network"
+                ) {
+                    val topology by remember {
+                        mutableStateOf(
+                            Topology(
+                                Dimension(19200, 10800),
+                                30,
+                                100,
+                                StaticLayoutAlgorithm(),
+                                groundTruthNetwork,
+                            )
+                        )
+                    }
+                    TopologyComponent(topology)
+                }
             }
         }
+
+        CSVAnalyzerWindow(
+            "Nodes in Ground Truth Network",
+            nodesOutputAnalyzer,
+            layoutOnAnalyzeCompleted = {
+                SelectableListComponent(
+                    nodesOutputAnalyzer.nodesForDisplay.value ?: listOf(),
+                    detailWindowTitle = { "Node ${it?.id}" },
+                    detailWindowLayout = {
+                        if (it != null) {
+                            NodeDetailComponent(it)
+                        }
+                    },
+                    listTopRowLayout = {
+                        Row {
+                            Text("NodeID")
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text("Channels")
+                        }
+                    },
+                    listItemLayout = { node: Node ->
+                        Row {
+                            Text(node.id)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(node.channels.size.toString())
+                        }
+                    },
+                    fetchLatestDetail = {
+                        groundTruthNetwork.nodes[it.id]
+                    },
+                    findByText = {
+                        groundTruthNetwork.nodes[it]
+                    },
+                    clipboardText = {
+                        it.id
+                    },
+                )
+            },
+        )
+
+        CSVAnalyzerWindow(
+            "Channels in Ground Truth Network",
+            channelsOutputAnalyzer,
+            layoutOnAnalyzeCompleted = {
+                SelectableListComponent(
+                    listDataForDisplay = channelsOutputAnalyzer.channelsForDisplay.value ?: listOf(),
+                    detailWindowTitle = { "Channel ${it?.shortChannelId}" },
+                    detailWindowLayout = { selected ->
+                        if (selected != null) {
+                            ChannelDetailComponent(selected)
+                        }
+                    },
+                    listTopRowLayout = {
+                        Row {
+                            Text("ChannelID")
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text("Updates")
+                        }
+                    },
+                    listItemLayout = { channel: Channel ->
+                        Row {
+                            Text(channel.shortChannelId)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text("${channel.edgeNode1ToNode2.channelUpdates.size}|${channel.edgeNode2ToNode1.channelUpdates.size}")
+                        }
+                    },
+                    fetchLatestDetail = {
+                        groundTruthNetwork.channels[it.shortChannelId]
+                    },
+                    findByText = {
+                        groundTruthNetwork.channels[it]
+                    },
+                    clipboardText = {
+                        it.shortChannelId
+                    },
+                )
+            },
+        )
     }
-
-    CSVAnalyzerWindow(
-        "Nodes in Ground Truth Network",
-        nodesOutputAnalyzer,
-        layoutOnAnalyzeCompleted = {
-            SelectableListComponent(
-                nodesOutputAnalyzer.nodesForDisplay.value ?: listOf(),
-                detailWindowTitle = { "Node ${it?.id}" },
-                detailWindowLayout = {
-                    if (it != null) {
-                        NodeDetailComponent(it)
-                    }
-                },
-                listTopRowLayout = {
-                    Row {
-                        Text("NodeID")
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text("Channels")
-                    }
-                },
-                listItemLayout = { node: Node ->
-                    Row {
-                        Text(node.id)
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(node.channels.size.toString())
-                    }
-                },
-                fetchLatestDetail = {
-                    groundTruthNetwork.nodes[it.id]
-                },
-                findByText = {
-                    groundTruthNetwork.nodes[it]
-                },
-                clipboardText = {
-                    it.id
-                },
-            )
-        },
-    )
-
-    CSVAnalyzerWindow(
-        "Channels in Ground Truth Network",
-        channelsOutputAnalyzer,
-        layoutOnAnalyzeCompleted = {
-            SelectableListComponent(
-                listDataForDisplay = channelsOutputAnalyzer.channelsForDisplay.value ?: listOf(),
-                detailWindowTitle = { "Channel ${it?.shortChannelId}" },
-                detailWindowLayout = { selected ->
-                    if (selected != null) {
-                        ChannelDetailComponent(selected)
-                    }
-                },
-                listTopRowLayout = {
-                    Row {
-                        Text("ChannelID")
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text("Updates")
-                    }
-                },
-                listItemLayout = { channel: Channel ->
-                    Row {
-                        Text(channel.shortChannelId)
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text("${channel.edgeNode1ToNode2.channelUpdates.size}|${channel.edgeNode2ToNode1.channelUpdates.size}")
-                    }
-                },
-                fetchLatestDetail = {
-                    groundTruthNetwork.channels[it.shortChannelId]
-                },
-                findByText = {
-                    groundTruthNetwork.channels[it]
-                },
-                clipboardText = {
-                    it.shortChannelId
-                },
-            )
-        },
-    )
     // ↑ ground truth windows
 }
