@@ -27,6 +27,8 @@ kotlin {
                 implementation("org.jetbrains.compose.ui:ui-tooling-preview-desktop:1.4.0")
                 implementation("org.jfree:jfreechart:1.5.4")
                 implementation("com.github.jrtom:jung:master-SNAPSHOT")
+                implementation("com.fasterxml.jackson.core:jackson-core:2.15.2")
+                implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
             }
         }
         val jvmTest by getting

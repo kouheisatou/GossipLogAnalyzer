@@ -32,6 +32,7 @@ class Channel(
     val shortChannelId: String,
     val node1: Node,
     val node2: Node,
+    val capacity: Long,
     val network: Network,
 ) {
     val edgeNode1ToNode2: Edge = Edge(this, Direction.Node1ToNode2)
