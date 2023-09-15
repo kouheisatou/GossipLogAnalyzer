@@ -3,6 +3,7 @@ package analyzer
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import convertShortChannelId
+import estimateDemand
 import kotlinx.coroutines.*
 import model.ground_truth_simulator_outputs.ChannelOutput
 import model.ground_truth_simulator_outputs.EdgeOutput
@@ -14,6 +15,7 @@ import network.Channel
 import network.Direction
 import network.Network
 import network.Node
+import printDemand
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -123,6 +125,9 @@ fun genNetworkFromLNDOutputs(
             }
         }
     }
+
+    estimateDemand(network)
+    printDemand(network)
 
     return network
 }
@@ -315,11 +320,16 @@ fun genGroundTruthNetworkFromSimulatorOutput(
                         return@forEach
                     }
                 }
+
+                val senderNode = nodes[paymentOutput.senderId] ?: continue
+                network.demand[senderNode] = (network.demand[senderNode] ?: 0L) + paymentOutput.amount.toLong()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
+
+    printDemand(network)
 
     return network
 }

@@ -60,8 +60,6 @@ class Topology private constructor(
     var selectedNode = mutableStateOf<Node?>(null)
     var selectedChannel = mutableStateOf<Channel?>(null)
 
-    val estimatedDemand = estimateDemand(this.network.nodes)
-
     constructor(
         graphSize: Dimension,
         maxStrokeWidth: Int,
@@ -174,10 +172,10 @@ fun TopologyComponent(
             Rectangle2D.Float(
                 0f,
                 0f,
-                topology.maxNodeSize * (topology.estimatedDemand[node]?.toFloat()
-                    ?: 0f) / topology.estimatedDemand.maxOf { it.value },
-                topology.maxNodeSize * (topology.estimatedDemand[node]?.toFloat()
-                    ?: 0f) / topology.estimatedDemand.maxOf { it.value },
+                topology.maxNodeSize * (topology.network.demand[node]?.toFloat()
+                    ?: 0f) / topology.network.demand.maxOf { it.value },
+                topology.maxNodeSize * (topology.network.demand[node]?.toFloat()
+                    ?: 0f) / topology.network.demand.maxOf { it.value },
             )
         }
 

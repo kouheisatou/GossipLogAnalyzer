@@ -114,13 +114,16 @@ fun main() = application {
                                     }
 
                                 nodesListForDisplay =
-                                    network.nodes.toList().sortedByDescending { it.second.channels.size }.let { list ->
-                                        val result = mutableListOf<Node>()
-                                        list.forEach {
-                                            result.add(it.second)
+                                    network.nodes
+                                        .toList()
+                                        .sortedByDescending { network.demand[it.second] ?: 0L }
+                                        .let { list ->
+                                            val result = mutableListOf<Node>()
+                                            list.forEach {
+                                                result.add(it.second)
+                                            }
+                                            result
                                         }
-                                        result
-                                    }
 
                                 estimatedNetwork.value = network
                             }
@@ -150,38 +153,6 @@ fun main() = application {
                 )
             }
             TopologyComponent(topology)
-
-
-            var isFileDialogOpened by remember { mutableStateOf(false) }
-            if (isFileDialogOpened) {
-                FilePicker(
-                    mode = FileDialog.SAVE,
-                    file = "estimated_demands.csv",
-                    onCloseRequest = { directory, filename ->
-                        println("$directory/$filename")
-                        if (filename != null && directory != null) {
-                            val file = File(directory, filename).apply { this.writeText("node_id,demand\n") }
-
-                            topology.estimatedDemand.toList().sortedByDescending { it.second }.forEach {
-                                file.appendText("${it.first.id},${it.second}\n")
-                            }
-                        }
-                        isFileDialogOpened = false
-                    }
-                )
-            }
-
-            MenuBar {
-                Menu("file") {
-                    Item(
-                        "Save Estimated Demand to CSV",
-                        onClick = {
-                            isFileDialogOpened = true
-                        },
-                        shortcut = KeyShortcut(Key.S, meta = true)
-                    )
-                }
-            }
         }
 
         Window(
@@ -200,14 +171,14 @@ fun main() = application {
                     Row {
                         Text("NodeID")
                         Spacer(modifier = Modifier.weight(1f))
-                        Text("Channels")
+                        Text("Demand")
                     }
                 },
                 listItemLayout = { node: Node ->
                     Row {
                         Text(node.id)
                         Spacer(modifier = Modifier.weight(1f))
-                        Text(node.channels.size.toString())
+                        Text((estimatedNetwork.value?.demand?.get(node) ?: 0L).toString())
                     }
                 },
                 fetchLatestDetail = {
@@ -336,7 +307,7 @@ fun main() = application {
 
                                     groundTruthNodesListForDisplay = network.nodes
                                         .toList()
-                                        .sortedByDescending { it.second.channels.size }
+                                        .sortedByDescending { network.demand[it.second] ?: 0L }
                                         .let { list ->
                                             val result = mutableListOf<Node>()
                                             list.forEach {
@@ -390,14 +361,14 @@ fun main() = application {
                         Row {
                             Text("NodeID")
                             Spacer(modifier = Modifier.weight(1f))
-                            Text("Channels")
+                            Text("Demand")
                         }
                     },
                     listItemLayout = { node: Node ->
                         Row {
                             Text(node.id)
                             Spacer(modifier = Modifier.weight(1f))
-                            Text(node.channels.size.toString())
+                            Text((groundTruthNetwork.value?.demand?.get(node) ?: 0L).toString())
                         }
                     },
                     fetchLatestDetail = {
