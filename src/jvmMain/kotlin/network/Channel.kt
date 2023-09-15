@@ -1,6 +1,7 @@
 package network
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import ui.SelectableListComponent
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,9 +15,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import model.input_gossip_msg.ChannelUpdate
@@ -78,7 +84,7 @@ fun ChannelDetailComponent(channel: Channel) {
         val chart = ChartFactory.createScatterPlot(
             null,
             "timestamp[ms]",
-            "htlcMaximumMsat[BTC]",
+            "htlcMaximumMsat[msat]",
             data,
         )
         (chart.plot as XYPlot).renderer =
@@ -97,79 +103,69 @@ fun ChannelDetailComponent(channel: Channel) {
 
         Divider(modifier = Modifier.fillMaxWidth())
 
-        SelectableListComponent(
-            listTitle = "Nodes",
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            listDataForDisplay = listOf(channel.node1, channel.node2),
-            detailWindowTitle = { "Node ${it?.id}" },
-            detailWindowLayout = {
-                if (it != null) {
-                    NodeDetailComponent(it)
-                }
-            },
-            listItemLayout = {
-                Column {
-                    if (it == channel.node1) {
-                        var showChannelUpdate by remember { mutableStateOf(false) }
-                        Row {
-                            Text("Node1 : ${channel.node1.id}", color = Color.Red, modifier = Modifier.weight(1f))
-                            IconButton(onClick = {
-                                showChannelUpdate = !showChannelUpdate
-                            }) {
-                                Text(
-                                    if (showChannelUpdate) {
-                                        "^"
-                                    } else {
-                                        "v"
-                                    }
-                                )
-                            }
-                        }
-                        if (showChannelUpdate) {
-                            Text("Channel Updates of ${channel.node1.id}(Node1) to ${channel.node2.id}(Node2)")
-                            Divider()
-                            Column {
-                                channel.edgeNode1ToNode2.channelUpdates.forEach {
-                                    Text(it.toString())
-                                }
-                                Divider()
-                            }
-                        }
-                    } else {
-                        var showChannelUpdate by remember { mutableStateOf(false) }
-                        Row {
-                            Text("Node2 : ${channel.node2.id}", color = Color.Blue, modifier = Modifier.weight(1f))
-                            IconButton(onClick = {
-                                showChannelUpdate = !showChannelUpdate
-                            }) {
-                                Text(
-                                    if (showChannelUpdate) {
-                                        "^"
-                                    } else {
-                                        "v"
-                                    }
-                                )
-                            }
-                        }
-                        if (showChannelUpdate) {
-                            Text("Channel Updates of ${channel.node2.id}(Node2) to ${channel.node1.id}(Node1)")
-                            Divider()
-                            Column {
-                                channel.edgeNode1ToNode2.channelUpdates.forEach {
-                                    Text(it.toString())
-                                }
-                                Divider()
-                            }
-                        }
+        var showNode1Window by remember { mutableStateOf(false) }
+        var showNode2Window by remember { mutableStateOf(false) }
+        Row(modifier = Modifier.fillMaxWidth().weight(1f), verticalAlignment = Alignment.CenterVertically) {
+            Text("Node1\n${channel.node1.id}", modifier = Modifier.clickable { showNode1Window = true })
+
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(channel.edgeNode1ToNode2.channelUpdates) {
+                        Text(it.toString())
+                        Divider()
                     }
                 }
-            },
-            fetchLatestDetail = {
-                channel.network.nodes[it.id]
-            },
-            clipboardText = {
-                it.id
-            },
-        )
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Divider(modifier = Modifier.height(1.dp).weight(1f), color = Color.Black)
+                    Text(">")
+                }
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text("<")
+                    Divider(modifier = Modifier.height(1.dp).weight(1f), color = Color.Black)
+                }
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(channel.edgeNode2ToNode1.channelUpdates) {
+                        Text(it.toString())
+                        Divider()
+                    }
+                }
+            }
+
+            Text("Node2\n${channel.node2.id}", modifier = Modifier.clickable { showNode2Window = true })
+        }
+
+        if (showNode1Window) {
+            Window(
+                onCloseRequest = {
+                    showNode1Window = false
+                },
+                title = "Node ${channel.node1.id}",
+                onKeyEvent = {
+                    if (it.type == KeyEventType.KeyDown && it.key == Key.Escape) {
+                        showNode1Window = false
+                    }
+                    false
+                }
+            ) {
+                NodeDetailComponent(channel.node1)
+            }
+        }
+
+        if (showNode2Window) {
+            Window(
+                onCloseRequest = {
+                    showNode2Window = false
+                },
+                title = "Node ${channel.node2.id}",
+                onKeyEvent = {
+                    if (it.type == KeyEventType.KeyDown && it.key == Key.Escape) {
+                        showNode2Window = false
+                    }
+                    false
+                }
+            ) {
+                NodeDetailComponent(channel.node2)
+            }
+        }
     }
 }
