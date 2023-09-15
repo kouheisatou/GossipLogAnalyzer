@@ -215,7 +215,6 @@ fun genGroundTruthNetworkFromSimulatorOutput(
         }
     }
 
-    // todo no channel_channel update loaded
     BufferedReader(FileReader(paymentsOutputCSVFile)).use { br ->
         var line: String?
         while (br.readLine().also { line = it } != null) {
@@ -223,25 +222,25 @@ fun genGroundTruthNetworkFromSimulatorOutput(
 
             try {
                 val route = mutableListOf<EdgeOutput>()
-                csvElements[1].split("-").forEach {
+                csvElements[12].split("-").forEach {
                     route.add(edges[it] ?: return@forEach)
                 }
 
                 val paymentOutput = PaymentOutput(
                     csvElements[0],
-                    csvElements[0],
-                    csvElements[0],
-                    csvElements[0],
-                    csvElements[0],
-                    csvElements[0],
-                    csvElements[0],
-                    csvElements[0],
-                    csvElements[0],
-                    csvElements[0],
-                    csvElements[0],
-                    csvElements[0],
+                    csvElements[1],
+                    csvElements[2],
+                    csvElements[3],
+                    csvElements[4],
+                    csvElements[5],
+                    csvElements[6],
+                    csvElements[7],
+                    csvElements[8],
+                    csvElements[9],
+                    csvElements[10],
+                    csvElements[11],
                     route,
-                    csvElements[0],
+                    csvElements[13],
                 )
 
                 route.forEach { edge ->
@@ -260,8 +259,7 @@ fun genGroundTruthNetworkFromSimulatorOutput(
                                 0L,
                                 0L,
                                 0L,
-                                (channel.edgeNode1ToNode2.capacity
-                                    ?: channel.capacity) - paymentOutput.amount.toLong(),
+                                channel.edgeNode1ToNode2.capacity - paymentOutput.amount.toLong(),
                             )
                         )
                         // increase capacity of counter edge
@@ -272,13 +270,12 @@ fun genGroundTruthNetworkFromSimulatorOutput(
                                 edge.channelId,
                                 paymentOutput.startTime.toLong(),
                                 "",
-                                Direction.Node1ToNode2.toString(),
+                                Direction.Node2ToNode1.toString(),
                                 "",
                                 0L,
                                 0L,
                                 0L,
-                                (channel.edgeNode1ToNode2.capacity
-                                    ?: channel.capacity) + paymentOutput.amount.toLong(),
+                                channel.edgeNode2ToNode1.capacity + paymentOutput.amount.toLong(),
                             )
                         )
                     } else if (channel.node1.id == edge.toNodeId && channel.node2.id == edge.fromNodeId) {
@@ -295,8 +292,7 @@ fun genGroundTruthNetworkFromSimulatorOutput(
                                 0L,
                                 0L,
                                 0L,
-                                (channel.edgeNode2ToNode1.capacity
-                                    ?: channel.capacity) - paymentOutput.amount.toLong(),
+                                channel.edgeNode2ToNode1.capacity - paymentOutput.amount.toLong(),
                             )
                         )
                         // increase capacity of counter edge
@@ -307,13 +303,12 @@ fun genGroundTruthNetworkFromSimulatorOutput(
                                 edge.channelId,
                                 paymentOutput.startTime.toLong(),
                                 "",
-                                Direction.Node2ToNode1.toString(),
+                                Direction.Node1ToNode2.toString(),
                                 "",
                                 0L,
                                 0L,
                                 0L,
-                                (channel.edgeNode2ToNode1.capacity
-                                    ?: channel.capacity) + paymentOutput.amount.toLong(),
+                                channel.edgeNode1ToNode2.capacity + paymentOutput.amount.toLong(),
                             )
                         )
                     } else {

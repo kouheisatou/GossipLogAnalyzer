@@ -29,9 +29,9 @@ class Edge(val channel: Channel, private val direction: Direction) {
             }
         }
 
-    val capacity: Long?
+    val capacity: Long
         get() {
-            return channelUpdates.lastOrNull()?.htlcMaximumMsat
+            return channelUpdates.lastOrNull()?.htlcMaximumMsat ?: channel.capacity
         }
 
     init {

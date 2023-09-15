@@ -317,10 +317,10 @@ fun main() = application {
 
                                 CoroutineScope(Dispatchers.IO).launch {
                                     val network = genGroundTruthNetworkFromSimulatorOutput(
-                                        filesForGroundTruth["payments_output.csv"]!!,
-                                        filesForGroundTruth["channels_output.csv"]!!,
                                         filesForGroundTruth["edges_output.csv"]!!,
                                         filesForGroundTruth["nodes_output.csv"]!!,
+                                        filesForGroundTruth["channels_output.csv"]!!,
+                                        filesForGroundTruth["payments_output.csv"]!!,
                                     )
 
                                     groundTruthChannelsListForDisplay = network.channels
