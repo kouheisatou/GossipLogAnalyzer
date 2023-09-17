@@ -106,9 +106,9 @@ fun ChannelDetailComponent(channel: Channel) {
         var showNode1Window by remember { mutableStateOf(false) }
         var showNode2Window by remember { mutableStateOf(false) }
         Row(modifier = Modifier.fillMaxWidth().weight(1f), verticalAlignment = Alignment.CenterVertically) {
-            Text("Node1\n${channel.node1.id}", modifier = Modifier.clickable { showNode1Window = true })
+            Text("Node1\n${channel.node1.id}", modifier = Modifier.weight(1f).clickable { showNode1Window = true })
 
-            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(modifier = Modifier.weight(3f), horizontalAlignment = Alignment.CenterHorizontally) {
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(channel.edgeNode1ToNode2.channelUpdates) {
                         Text(it.toString())
@@ -117,10 +117,15 @@ fun ChannelDetailComponent(channel: Channel) {
                 }
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Divider(modifier = Modifier.height(1.dp).weight(1f), color = Color.Black)
+                    Text(channel.edgeNode1ToNode2.capacity.toString())
+                    Divider(modifier = Modifier.height(1.dp).weight(1f), color = Color.Black)
                     Text(">")
                 }
+                Text("capacity = ${channel.capacity}")
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("<")
+                    Divider(modifier = Modifier.height(1.dp).weight(1f), color = Color.Black)
+                    Text(channel.edgeNode2ToNode1.capacity.toString())
                     Divider(modifier = Modifier.height(1.dp).weight(1f), color = Color.Black)
                 }
                 LazyColumn(modifier = Modifier.weight(1f)) {
@@ -131,7 +136,7 @@ fun ChannelDetailComponent(channel: Channel) {
                 }
             }
 
-            Text("Node2\n${channel.node2.id}", modifier = Modifier.clickable { showNode2Window = true })
+            Text("Node2\n${channel.node2.id}", modifier = Modifier.weight(1f).clickable { showNode2Window = true })
         }
 
         if (showNode1Window) {
