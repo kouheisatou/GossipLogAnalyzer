@@ -15,10 +15,11 @@ import network.Channel
 import network.Direction
 import network.Network
 import network.Node
-import printDemand
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -26,7 +27,8 @@ import java.time.format.DateTimeFormatter
 fun genNetworkFromLNDOutputs(
     describeGraphJsonFile: File,
     channelAnnouncementCSVFile: File,
-    channelUpdateCSVFile: File
+    channelUpdateCSVFile: File,
+    onProgressChanged: (progress: Float, processTitle: String) -> Unit,
 ): Network {
     val channels = mutableMapOf<String, Channel>()
     val nodes = mutableMapOf<String, Node>()
@@ -37,24 +39,28 @@ fun genNetworkFromLNDOutputs(
         describeGraphJsonFile,
         object : TypeReference<Map<String, List<Map<String, Any>>>>() {},
     )
-    json["nodes"]?.forEach {
-        val id = it["pub_key"] as String
+    json["nodes"]?.forEachIndexed { index, map ->
+        val id = map["pub_key"] as String
         nodes[id] = Node(id, network)
+        onProgressChanged(index.toFloat() / json["nodes"]!!.size, "Loading nodes from ${describeGraphJsonFile.name}")
     }
-    json["edges"]?.forEach {
-        val id = convertShortChannelId((it["channel_id"] as String).toLong())
-        val capacity = (it["capacity"] as String).toLong()
-        val node1 = nodes[it["node1_pub"]] ?: return@forEach
-        val node2 = nodes[it["node2_pub"]] ?: return@forEach
+    json["edges"]?.forEachIndexed { index, map ->
+        val id = convertShortChannelId((map["channel_id"] as String).toLong())
+        val capacity = (map["capacity"] as String).toLong()
+        val node1 = nodes[map["node1_pub"]] ?: return@forEachIndexed
+        val node2 = nodes[map["node2_pub"]] ?: return@forEachIndexed
         channels[id] = Channel(id, node1, node2, capacity, network)
+        onProgressChanged(index.toFloat() / json["edges"]!!.size, "Loading edges in ${describeGraphJsonFile.name}")
     }
 
     // load channelUpdateCSVFile
-
+    var maxLine = Files.lines(Paths.get(channelAnnouncementCSVFile.path)).count()
+    var currentLine = 0L
     BufferedReader(FileReader(channelAnnouncementCSVFile)).use { br ->
         var line: String?
 
         while (br.readLine().also { line = it } != null) {
+            onProgressChanged(currentLine++.toFloat() / maxLine, "Loading ${channelAnnouncementCSVFile.name}")
             val csvElements = line?.split(",") ?: return@use
 
             try {
@@ -89,13 +95,17 @@ fun genNetworkFromLNDOutputs(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+
         }
     }
 
+    maxLine = Files.lines(Paths.get(channelUpdateCSVFile.path)).count()
+    currentLine = 0L
     BufferedReader(FileReader(channelUpdateCSVFile)).use { br ->
         var line: String?
 
         while (br.readLine().also { line = it } != null) {
+            onProgressChanged(currentLine++.toFloat() / maxLine, "Loading ${channelUpdateCSVFile.name}")
             val csvElements = line?.split(",") ?: return@use
 
             try {
@@ -132,8 +142,12 @@ fun genNetworkFromLNDOutputs(
         }
     }
 
-    estimateDemand(network)
-    printDemand(network)
+    estimateDemand(
+        network,
+        onProgressChanged = {
+            onProgressChanged(it, "Estimating demands")
+        },
+    )
 
     return network
 }
@@ -144,6 +158,7 @@ fun genGroundTruthNetworkFromSimulatorOutput(
     nodesOutputCSVFile: File,
     channelsOutputCSVFile: File,
     paymentsOutputCSVFile: File,
+    onProgressChanged: (progress: Float, processTitle: String) -> Unit
 ): Network {
     val channels = mutableMapOf<String, Channel>()
     val nodes = mutableMapOf<String, Node>()
@@ -151,9 +166,12 @@ fun genGroundTruthNetworkFromSimulatorOutput(
 
     val edges = mutableMapOf<String, EdgeOutput>()
 
+    var maxLine = Files.lines(Paths.get(edgesOutputCSVFile.path)).count()
+    var currentLine = 0L
     BufferedReader(FileReader(edgesOutputCSVFile)).use { br ->
         var line: String?
         while (br.readLine().also { line = it } != null) {
+            onProgressChanged(currentLine++.toFloat() / maxLine, "Loading ${edgesOutputCSVFile.name}")
             val csvElements = line?.split(",") ?: continue
             try {
                 val edgeOutput = EdgeOutput(
@@ -178,9 +196,12 @@ fun genGroundTruthNetworkFromSimulatorOutput(
         }
     }
 
+    maxLine = Files.lines(Paths.get(nodesOutputCSVFile.path)).count()
+    currentLine = 0L
     BufferedReader(FileReader(nodesOutputCSVFile)).use { br ->
         var line: String?
         while (br.readLine().also { line = it } != null) {
+            onProgressChanged(currentLine++.toFloat() / maxLine, "Loading ${nodesOutputCSVFile.name}")
             val csvElements = line?.split(",") ?: continue
             try {
                 val openEdges = mutableListOf<EdgeOutput>()
@@ -197,9 +218,12 @@ fun genGroundTruthNetworkFromSimulatorOutput(
         }
     }
 
+    maxLine = Files.lines(Paths.get(channelsOutputCSVFile.path)).count()
+    currentLine = 0L
     BufferedReader(FileReader(channelsOutputCSVFile)).use { br ->
         var line: String?
         while (br.readLine().also { line = it } != null) {
+            onProgressChanged(currentLine++.toFloat() / maxLine, "Loading ${channelsOutputCSVFile.name}")
             val csvElements = line?.split(",") ?: continue
             try {
                 val channelOutput = ChannelOutput(
@@ -226,9 +250,12 @@ fun genGroundTruthNetworkFromSimulatorOutput(
         }
     }
 
+    maxLine = Files.lines(Paths.get(paymentsOutputCSVFile.path)).count()
+    currentLine = 0L
     BufferedReader(FileReader(paymentsOutputCSVFile)).use { br ->
         var line: String?
         while (br.readLine().also { line = it } != null) {
+            onProgressChanged(currentLine++.toFloat() / maxLine, "Loading ${paymentsOutputCSVFile.name}")
             val csvElements = line?.split(",") ?: continue
 
             try {
@@ -334,8 +361,6 @@ fun genGroundTruthNetworkFromSimulatorOutput(
             }
         }
     }
-
-    printDemand(network)
 
     return network
 }

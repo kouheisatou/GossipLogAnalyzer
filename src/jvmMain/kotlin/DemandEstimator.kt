@@ -3,7 +3,8 @@ import network.Network
 import network.Node
 import java.io.File
 
-fun estimateDemand(network: Network): Map<Node, Long> {
+fun estimateDemand(network: Network, onProgressChanged: (progress: Float) -> Unit): Map<Node, Long> {
+    var count = 0L
     for (node in network.nodes) {
         for (channel in node.value.channels) {
             for (channelUpdate in channel.edgeNode1ToNode2.channelUpdates) {
@@ -13,12 +14,7 @@ fun estimateDemand(network: Network): Map<Node, Long> {
                 network.demand[channel.node1] = (network.demand[channel.node1] ?: 0) + 1
             }
         }
+        onProgressChanged(count++.toFloat() / network.nodes.size)
     }
     return network.demand
-}
-
-fun printDemand(network: Network) {
-    network.demand.toList().sortedByDescending { it.second }.forEach {
-        println("${it.first.id}\t${it.second}")
-    }
 }
