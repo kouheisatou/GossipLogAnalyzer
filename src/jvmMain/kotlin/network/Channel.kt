@@ -117,15 +117,15 @@ fun ChannelDetailComponent(channel: Channel) {
                 }
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Divider(modifier = Modifier.height(1.dp).weight(1f), color = Color.Black)
-                    Text(channel.edgeNode1ToNode2.capacity.toString())
+                    Text("edgeCapacity=${channel.edgeNode1ToNode2.capacity}[msat]")
                     Divider(modifier = Modifier.height(1.dp).weight(1f), color = Color.Black)
                     Text(">")
                 }
-                Text("capacity = ${channel.capacity}")
+                Text("channelCapacity=${channel.capacity}[msat]")
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text("<")
                     Divider(modifier = Modifier.height(1.dp).weight(1f), color = Color.Black)
-                    Text(channel.edgeNode2ToNode1.capacity.toString())
+                    Text("edgeCapacity=${channel.edgeNode2ToNode1.capacity}[msat]")
                     Divider(modifier = Modifier.height(1.dp).weight(1f), color = Color.Black)
                 }
                 LazyColumn(modifier = Modifier.weight(1f)) {

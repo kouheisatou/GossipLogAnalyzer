@@ -74,7 +74,13 @@ fun genNetworkFromLNDOutputs(
 
                 val node1 = nodes[channelAnnouncement.nodeId1] ?: Node(channelAnnouncement.nodeId1, network)
                 val node2 = nodes[channelAnnouncement.nodeId2] ?: Node(channelAnnouncement.nodeId2, network)
-                val channel = Channel(channelAnnouncement.shortChannelId, node1, node2, 0L, network)
+                val channel = channels[channelAnnouncement.shortChannelId] ?: Channel(
+                    channelAnnouncement.shortChannelId,
+                    node1,
+                    node2,
+                    0L,
+                    network
+                )
                 node1.channels.add(channel)
                 node2.channels.add(channel)
                 nodes[channelAnnouncement.nodeId1] = node1
