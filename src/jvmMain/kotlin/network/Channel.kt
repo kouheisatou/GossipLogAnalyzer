@@ -3,14 +3,9 @@ package network
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import ui.SelectableListComponent
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.onClick
-import androidx.compose.material.Divider
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,13 +21,18 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import model.input_gossip_msg.ChannelUpdate
-import org.jfree.chart.ChartFactory
-import org.jfree.chart.ChartPanel
+import movingAverage
+import org.jfree.chart.*
+import org.jfree.chart.entity.ChartEntity
+import org.jfree.chart.entity.LegendItemEntity
 import org.jfree.chart.plot.XYPlot
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer
 import org.jfree.data.xy.XYDataItem
 import org.jfree.data.xy.XYSeries
 import org.jfree.data.xy.XYSeriesCollection
+import java.awt.event.MouseEvent
+import javax.swing.JMenuItem
+import javax.swing.JPopupMenu
 
 class Channel(
     val shortChannelId: String,
@@ -43,6 +43,8 @@ class Channel(
 ) {
     val edgeNode1ToNode2: Edge = Edge(this, Direction.Node1ToNode2)
     val edgeNode2ToNode1: Edge = Edge(this, Direction.Node2ToNode1)
+
+    var channelUpdateChart: JFreeChart? = null
 
     fun addChannelUpdate(channelUpdate: ChannelUpdate) {
         if (channelUpdate.direction == Direction.Node1ToNode2) {
@@ -64,32 +66,93 @@ class Channel(
         return "Channel(shortChannelId='$shortChannelId', node1=${node1.id}, node2=${node2.id})"
     }
 
+    fun initChannelUpdateChart() {
+
+        val data = XYSeriesCollection()
+
+        val node1ToNode2MASeries = XYSeries("MA of Node1 to Node2", true)
+        movingAverage(
+            edgeNode1ToNode2.channelUpdates,
+            horizontalAxisValue = { it.timestamp },
+            verticalAxisValue = { it.htlcMaximumMsat },
+            10000L
+        ).forEach {
+            node1ToNode2MASeries.add(it.first, it.second)
+        }
+        data.addSeries(node1ToNode2MASeries)
+
+        val node2ToNode1MASeries = XYSeries("MA of Node2 to Node1", true)
+        movingAverage(
+            edgeNode2ToNode1.channelUpdates,
+            horizontalAxisValue = { it.timestamp },
+            verticalAxisValue = { it.htlcMaximumMsat },
+            10000L
+        ).forEach {
+            node2ToNode1MASeries.add(it.first, it.second)
+        }
+        data.addSeries(node2ToNode1MASeries)
+
+        val node1ToNode2Series = XYSeries("Node1 to Node2", true)
+        edgeNode1ToNode2.channelUpdates.forEach {
+            node1ToNode2Series.add(XYDataItem(it.timestamp, it.htlcMaximumMsat))
+        }
+        data.addSeries(node1ToNode2Series)
+
+        val node2ToNode1Series = XYSeries("Node2 to Node1", true)
+        edgeNode2ToNode1.channelUpdates.forEach {
+            node2ToNode1Series.add(XYDataItem(it.timestamp, it.htlcMaximumMsat))
+        }
+        data.addSeries(node2ToNode1Series)
+
+        val chart = ChartFactory.createScatterPlot(
+            null,
+            "timestamp[ms]",
+            "htlc_maximum_msat[msat]",
+            data,
+        )
+        (chart.plot as XYPlot).renderer = XYLineAndShapeRenderer().apply {
+            setSeriesShapesVisible(0, false)
+            setSeriesShapesVisible(1, false)
+            setSeriesShapesVisible(2, true)
+            setSeriesShapesVisible(3, true)
+        }
+
+        this.channelUpdateChart = chart
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChannelDetailComponent(channel: Channel) {
+    val chartSeriesVisible by remember { mutableStateOf(mutableSetOf(0, 1, 2, 3)) }
+
     Column {
-        val data = XYSeriesCollection()
-        val node1ToNode2Series = XYSeries("node1 to node2", true)
-        val node2ToNode1Series = XYSeries("node2 to node1", true)
-        channel.edgeNode1ToNode2.channelUpdates.forEach {
-            node1ToNode2Series.add(XYDataItem(it.timestamp, it.htlcMaximumMsat))
+        val chartPane = ChartPanel(channel.channelUpdateChart).apply {
+            addChartMouseListener(object : ChartMouseListener {
+                override fun chartMouseClicked(event: ChartMouseEvent) {
+                    if (event.entity is LegendItemEntity) {
+                        val renderer = (channel.channelUpdateChart!!.plot as XYPlot).renderer as XYLineAndShapeRenderer
+                        for (legendItemIndex in 0 until renderer.legendItems.itemCount) {
+                            val legendItem = renderer.getLegendItem(0, legendItemIndex) as LegendItem
+                            if (legendItem.seriesKey == (event.entity as LegendItemEntity).seriesKey) {
+                                val visible = if (chartSeriesVisible.remove(legendItemIndex)) {
+                                    false
+                                } else {
+                                    chartSeriesVisible.add(legendItemIndex)
+                                    true
+                                }
+                                renderer.setSeriesLinesVisible(legendItemIndex, visible)
+                                if (legendItemIndex >= 2) {
+                                    renderer.setSeriesShapesVisible(legendItemIndex, visible)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                override fun chartMouseMoved(event: ChartMouseEvent?) {}
+            })
         }
-        channel.edgeNode2ToNode1.channelUpdates.forEach {
-            node2ToNode1Series.add(XYDataItem(it.timestamp, it.htlcMaximumMsat))
-        }
-        data.addSeries(node1ToNode2Series)
-        data.addSeries(node2ToNode1Series)
-        val chart = ChartFactory.createScatterPlot(
-            null,
-            "timestamp[ms]",
-            "htlcMaximumMsat[msat]",
-            data,
-        )
-        (chart.plot as XYPlot).renderer =
-            XYLineAndShapeRenderer().apply { setSeriesLinesVisible(0, true) }
-        val chartPane = ChartPanel(chart)
 
         SwingPanel(
             modifier = Modifier.fillMaxWidth().weight(1f),
@@ -97,7 +160,15 @@ fun ChannelDetailComponent(channel: Channel) {
                 chartPane
             },
             update = {
-                chartPane.chart = chart
+                val renderer = (channel.channelUpdateChart!!.plot as XYPlot).renderer as XYLineAndShapeRenderer
+                for (legendItemIndex in 0 until renderer.legendItems.itemCount) {
+                    val visible = chartSeriesVisible.contains(legendItemIndex)
+                    renderer.setSeriesLinesVisible(legendItemIndex, visible)
+                    if (legendItemIndex >= 2) {
+                        renderer.setSeriesShapesVisible(legendItemIndex, visible)
+                    }
+                }
+                chartPane.chart = channel.channelUpdateChart
             }
         )
 

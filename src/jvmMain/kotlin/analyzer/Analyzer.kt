@@ -142,6 +142,12 @@ fun genNetworkFromLNDOutputs(
         }
     }
 
+    var count = 0
+    network.channels.forEach {
+        onProgressChanged(count++.toFloat() / network.channels.size, "Initializing channel_update Charts")
+        it.value.initChannelUpdateChart()
+    }
+
     estimateDemand(
         network,
         onProgressChanged = {
