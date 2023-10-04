@@ -45,7 +45,11 @@ fun genNetworkFromLNDOutputs(
         onProgressChanged(index.toFloat() / json["nodes"]!!.size, "Loading nodes from ${describeGraphJsonFile.name}")
     }
     json["edges"]?.forEachIndexed { index, map ->
-        val id = convertShortChannelId((map["channel_id"] as String).toLong())
+        val id = if((map["channel_id"] as String).contains(":")) {
+            convertShortChannelId((map["channel_id"] as String).toLong())
+        }else{
+            map["channel_id"] as String
+        }
         val capacity = (map["capacity"] as String).toLong()
         val node1 = nodes[map["node1_pub"]] ?: return@forEachIndexed
         val node2 = nodes[map["node2_pub"]] ?: return@forEachIndexed

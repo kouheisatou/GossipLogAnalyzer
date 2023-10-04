@@ -66,7 +66,7 @@ class Channel(
         return "Channel(shortChannelId='$shortChannelId', node1=${node1.id}, node2=${node2.id})"
     }
 
-    fun initChannelUpdateChart() {
+    fun initChannelUpdateChart(): JFreeChart {
 
         val data = XYSeriesCollection()
 
@@ -118,6 +118,7 @@ class Channel(
         }
 
         this.channelUpdateChart = chart
+        return chart
     }
 }
 
@@ -160,7 +161,7 @@ fun ChannelDetailComponent(channel: Channel) {
                 chartPane
             },
             update = {
-                val renderer = (channel.channelUpdateChart!!.plot as XYPlot).renderer as XYLineAndShapeRenderer
+                val renderer = ((channel.channelUpdateChart ?: channel.initChannelUpdateChart()).plot as XYPlot).renderer as XYLineAndShapeRenderer
                 for (legendItemIndex in 0 until renderer.legendItems.itemCount) {
                     val visible = chartSeriesVisible.contains(legendItemIndex)
                     renderer.setSeriesLinesVisible(legendItemIndex, visible)
