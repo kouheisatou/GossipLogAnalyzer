@@ -31,7 +31,11 @@ class Edge(val channel: Channel, private val direction: Direction) {
 
     val capacity: Long
         get() {
-            return channelUpdates.lastOrNull()?.htlcMaximumMsat ?: channel.capacity
+            return channelUpdates.lastOrNull()?.htlcMaximumMsat ?: if (direction == Direction.Node1ToNode2) {
+                channel.capacity
+            } else {
+                0
+            }
         }
 
     init {
